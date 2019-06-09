@@ -5,6 +5,7 @@ authors = ["Andrew Radev <andrey.radev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+webkit2gtk = "*"
 
 [dependencies.gtk]
 version = "0.6.0"
