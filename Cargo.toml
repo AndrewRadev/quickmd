@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 webkit2gtk = "*"
+pulldown-cmark = "*"
 
 [dependencies.gtk]
 version = "0.6.0"
