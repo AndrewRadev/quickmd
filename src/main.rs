@@ -13,6 +13,7 @@ use notify::{Watcher, RecursiveMode, watcher};
 use pulldown_cmark::{Parser, html};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
+#[derive(Clone)]
 struct Content {
     md_path: PathBuf,
 }
@@ -32,6 +33,84 @@ impl Content {
     }
 }
 
+#[derive(Clone)]
+struct UserInterface {
+    window: Window,
+    webview: WebView,
+}
+
+impl UserInterface {
+    fn init() -> Self {
+        let window = Window::new(WindowType::Toplevel);
+        window.set_default_size(1024, 768);
+
+        let context = WebContext::get_default().unwrap();
+        let webview = WebView::new_with_context(&context);
+
+        window.add(&webview);
+
+        UserInterface { window, webview }
+    }
+
+    fn set_filename(&self, filename: &Path) {
+        self.window.set_title(&format!("Quickmd: {}", filename.display()));
+    }
+
+    fn load_html(&mut self, html: &str) {
+        self.webview.load_html(html, None);
+    }
+
+    fn run(&self) {
+        self.window.show_all();
+
+        self.window.connect_delete_event(|_, _| {
+            gtk::main_quit();
+            Inhibit(false)
+        });
+
+        gtk::main();
+    }
+}
+
+fn init_watch_loop(content: Content, gui_sender: glib::Sender<String>) {
+    thread::spawn(move || {
+        let (watcher_sender, watcher_receiver) = mpsc::channel();
+        let mut watcher = watcher(watcher_sender, Duration::from_millis(200)).unwrap();
+        watcher.watch(&content.md_path, RecursiveMode::NonRecursive).unwrap();
+
+        loop {
+            match watcher_receiver.recv() {
+                Ok(_) => {
+                    match content.render() {
+                        Ok(html) => {
+                            let _ = gui_sender.send(html);
+                        },
+                        Err(e) => {
+                            eprintln! {
+                                "Error rendering markdown ({}): {:?}",
+                                content.md_path.display(), e
+                            };
+                        }
+                    }
+                },
+                Err(e) => {
+                    eprintln! {
+                        "Error watching file for changes ({}): {:?}",
+                        content.md_path.display(), e
+                    };
+                },
+            }
+        }
+    });
+}
+
+fn init_ui_render_loop(mut ui: UserInterface, gui_receiver: glib::Receiver<String>) {
+    gui_receiver.attach(None, move |html| {
+        ui.load_html(&html);
+        glib::Continue(true)
+    });
+}
+
 fn main() {
     if gtk::init().is_err() {
         eprintln!("Failed to initialize GTK.");
@@ -48,56 +127,19 @@ fn main() {
     });
     let content = Content::new(md_path);
 
-    let window = Window::new(WindowType::Toplevel);
-    window.set_title(&format!("Quickmd: {}", content.md_path.display()));
-    //window.set_default_size(350, 70);
-
-    // Create a the WebView for the preview pane.
-    let context = WebContext::get_default().unwrap();
-    let preview = WebView::new_with_context(&context);
+    let mut ui = UserInterface::init();
     let html = content.render().unwrap_or_else(|e| {
         eprintln!("Couldn't parse markdown from file {}: {}", content.md_path.display(), e);
         exit(1);
     });
-    preview.load_html(&html, None);
 
-    window.add(&preview);
-    window.show_all();
+    ui.set_filename(&content.md_path);
+    ui.load_html(&html);
 
     let (gui_sender, gui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
 
-    thread::spawn(move || {
-        let (watcher_sender, watcher_receiver) = mpsc::channel();
-        let mut watcher = watcher(watcher_sender, Duration::from_millis(200)).unwrap();
-        watcher.watch(&content.md_path, RecursiveMode::NonRecursive).unwrap();
+    init_watch_loop(content.clone(), gui_sender);
+    init_ui_render_loop(ui.clone(), gui_receiver);
 
-        loop {
-            match watcher_receiver.recv() {
-                Ok(_) => {
-                    let _ = gui_sender.send(content.render());
-                },
-                Err(e) => {
-                    eprintln! {
-                        "Error watching file for changes ({}): {:?}",
-                        content.md_path.display(), e
-                    };
-                },
-            }
-        }
-    });
-
-    let preview_clone = preview.clone();
-    gui_receiver.attach(None, move |message| {
-        if let Ok(html) = message {
-            preview_clone.load_html(&html, None);
-        }
-        glib::Continue(true)
-    });
-
-    window.connect_delete_event(|_, _| {
-        gtk::main_quit();
-        Inhibit(false)
-    });
-
-    gtk::main();
+    ui.run();
 }
