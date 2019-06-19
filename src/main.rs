@@ -7,11 +7,16 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+use std::fs::File;
+use std::io::Write;
+
+use dirs::home_dir;
 use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use notify::{Watcher, RecursiveMode, watcher};
 use pulldown_cmark::{Parser, html};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
+use tempfile::{tempdir, TempDir};
 
 #[derive(Clone)]
 struct Content {
@@ -33,10 +38,20 @@ impl Content {
     }
 }
 
-#[derive(Clone)]
 struct UserInterface {
     window: Window,
     webview: WebView,
+    content_dir: TempDir,
+}
+
+impl Clone for UserInterface {
+    fn clone(&self) -> Self {
+        UserInterface {
+            window: self.window.clone(),
+            webview: self.webview.clone(),
+            content_dir: tempdir().unwrap(),
+        }
+    }
 }
 
 impl UserInterface {
@@ -49,7 +64,7 @@ impl UserInterface {
 
         window.add(&webview);
 
-        UserInterface { window, webview }
+        UserInterface { window, webview, content_dir: tempdir().unwrap() }
     }
 
     fn set_filename(&self, filename: &Path) {
@@ -57,7 +72,29 @@ impl UserInterface {
     }
 
     fn load_html(&mut self, html: &str) {
-        self.webview.load_html(html, None);
+        let src_path = PathBuf::from(file!()).
+            canonicalize().
+            map(|p| p.display().to_string()).
+            unwrap_or(String::new());
+        let home_path = home_dir().
+            map(|p| p.display().to_string()).
+            unwrap_or(String::new());
+
+        let page = format! {
+            include_str!("../resources/template.html"),
+            src_path=src_path,
+            home_path=home_path,
+            body=html,
+        };
+
+        let html_path = self.content_dir.path().join("content.html");
+        {
+            let mut f = File::create(html_path.clone()).unwrap();
+            f.write(page.as_bytes()).unwrap();
+            f.flush().unwrap();
+        }
+
+        self.webview.load_uri(&format!("file://{}", html_path.display()));
     }
 
     fn run(&self) {

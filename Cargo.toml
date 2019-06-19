@@ -8,6 +8,8 @@ edition = "2018"
 webkit2gtk = "*"
 pulldown-cmark = "*"
 notify = "*"
+dirs = "*"
+tempfile = "*"
 
 [dependencies.gtk]
 version = "0.6.0"
