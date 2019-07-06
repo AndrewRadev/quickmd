@@ -75,7 +75,8 @@ impl UserInterface {
     }
 
     fn load_html(&mut self, html: &str) {
-        let src_path = PathBuf::from(file!()).
+        let src_root = PathBuf::from(option_env!("PWD").unwrap_or(""));
+        let src_path = src_root.join(file!()).
             canonicalize().
             map(|p| p.display().to_string()).
             unwrap_or(String::new());
