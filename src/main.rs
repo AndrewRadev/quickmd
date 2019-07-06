@@ -11,6 +11,7 @@ use std::fs::File;
 use std::io::Write;
 
 use dirs::home_dir;
+use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use notify::{Watcher, RecursiveMode, watcher};
@@ -72,6 +73,17 @@ impl UserInterface {
 
     fn set_filename(&self, filename: &Path) {
         self.window.set_title(&format!("Quickmd: {}", filename.display()));
+    }
+
+    fn connect_events(&self) {
+        // Each key press will invoke this function.
+        self.window.connect_key_press_event(move |_window, gdk| {
+            match gdk.get_keyval() {
+                key::Escape => gtk::main_quit(),
+                _ => (),
+            }
+            Inhibit(false)
+        });
     }
 
     fn load_html(&mut self, html: &str) {
@@ -181,6 +193,7 @@ fn main() {
     });
 
     ui.set_filename(&content.md_path);
+    ui.connect_events();
     ui.load_html(&html);
 
     let (gui_sender, gui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
