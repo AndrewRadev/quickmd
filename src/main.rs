@@ -156,6 +156,8 @@ fn init_ui_render_loop(mut ui: UserInterface, gui_receiver: glib::Receiver<Strin
 }
 
 fn main() {
+    better_panic::install();
+
     if gtk::init().is_err() {
         eprintln!("Failed to initialize GTK.");
         exit(1);
