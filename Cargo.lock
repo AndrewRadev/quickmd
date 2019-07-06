@@ -594,6 +594,7 @@ name = "quickmd"
 version = "0.1.0"
 dependencies = [
  "dirs 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gio 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glib 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gtk 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "notify 4.0.12 (registry+https://github.com/rust-lang/crates.io-index)",

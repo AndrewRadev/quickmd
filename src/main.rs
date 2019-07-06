@@ -64,7 +64,10 @@ impl UserInterface {
 
         window.add(&webview);
 
-        UserInterface { window, webview, content_dir: tempdir().unwrap() }
+        UserInterface {
+            window, webview,
+            content_dir: tempdir().unwrap(),
+        }
     }
 
     fn set_filename(&self, filename: &Path) {
@@ -79,12 +82,16 @@ impl UserInterface {
         let home_path = home_dir().
             map(|p| p.display().to_string()).
             unwrap_or(String::new());
+        let scroll_top = self.webview.get_title().
+            and_then(|t| t.parse::<f64>().ok()).
+            unwrap_or(0.0);
 
         let page = format! {
             include_str!("../resources/template.html"),
             src_path=src_path,
             home_path=home_path,
             body=html,
+            scroll_top=scroll_top,
         };
 
         let html_path = self.content_dir.path().join("content.html");
