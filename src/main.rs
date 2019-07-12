@@ -1,8 +1,8 @@
 use std::env;
+use std::error::Error;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::exit;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -168,29 +168,22 @@ fn init_ui_render_loop(mut ui: UserInterface, gui_receiver: glib::Receiver<Strin
     });
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     better_panic::install();
 
-    if gtk::init().is_err() {
-        eprintln!("Failed to initialize GTK.");
-        exit(1);
-    }
+    gtk::init()?;
 
-    let input = env::args().nth(1).unwrap_or_else(|| {
-        eprintln!("USAGE: quickmd <file.md>");
-        exit(1);
-    });
-    let md_path = Path::new(&input).canonicalize().unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        exit(1);
-    });
+    let input = env::args().nth(1).ok_or_else(|| {
+        format!("USAGE: quickmd <file.md>")
+    })?;
+
+    let md_path = Path::new(&input).canonicalize()?;
     let content = Content::new(md_path);
 
     let mut ui = UserInterface::init();
-    let html = content.render().unwrap_or_else(|e| {
-        eprintln!("Couldn't parse markdown from file {}: {}", content.md_path.display(), e);
-        exit(1);
-    });
+    let html = content.render().map_err(|e| {
+        format!("Couldn't parse markdown from file {}: {}", content.md_path.display(), e)
+    })?;
 
     ui.set_filename(&content.md_path);
     ui.connect_events();
@@ -202,4 +195,5 @@ fn main() {
     init_ui_render_loop(ui.clone(), gui_receiver);
 
     ui.run();
+    Ok(())
 }
