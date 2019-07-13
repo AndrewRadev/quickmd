@@ -1,6 +1,6 @@
 use std::env;
 use std::error::Error;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         format!("USAGE: quickmd <file.md>")
     })?;
 
-    let md_path = Path::new(&input).canonicalize()?;
+    let md_path = PathBuf::from(&input);
     let content = Content::new(md_path);
 
     let mut ui = ui::App::init();

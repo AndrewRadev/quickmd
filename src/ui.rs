@@ -5,7 +5,7 @@ use std::path::Path;
 use dirs::home_dir;
 use gdk::enums::key;
 use gtk::prelude::*;
-use gtk::{Window, WindowType};
+use gtk::{Window, WindowType, HeaderBar};
 use tempfile::{tempdir, TempDir};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
@@ -16,6 +16,7 @@ pub enum Event {
 
 pub struct App {
     window: Window,
+    header_bar: HeaderBar,
     webview: WebView,
     temp_dir: TempDir,
 }
@@ -24,6 +25,7 @@ impl Clone for App {
     fn clone(&self) -> Self {
         App {
             window: self.window.clone(),
+            header_bar: self.header_bar.clone(),
             webview: self.webview.clone(),
             temp_dir: tempdir().unwrap(),
         }
@@ -35,19 +37,24 @@ impl App {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
+        let header_bar = HeaderBar::new();
+        header_bar.set_title("Quickmd");
+        header_bar.set_show_close_button(true);
+
         let web_context = WebContext::get_default().unwrap();
         let webview = WebView::new_with_context(&web_context);
 
+        window.set_titlebar(&header_bar);
         window.add(&webview);
 
         App {
-            window, webview,
+            window, header_bar, webview,
             temp_dir: tempdir().unwrap(),
         }
     }
 
     pub fn set_filename(&self, filename: &Path) {
-        self.window.set_title(&format!("Quickmd: {}", filename.display()));
+        self.header_bar.set_title(filename.to_str());
     }
 
     pub fn connect_events(&self) {
