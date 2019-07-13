@@ -42,7 +42,7 @@ impl Content {
 struct UserInterface {
     window: Window,
     webview: WebView,
-    content_dir: TempDir,
+    temp_dir: TempDir,
 }
 
 impl Clone for UserInterface {
@@ -50,7 +50,7 @@ impl Clone for UserInterface {
         UserInterface {
             window: self.window.clone(),
             webview: self.webview.clone(),
-            content_dir: tempdir().unwrap(),
+            temp_dir: tempdir().unwrap(),
         }
     }
 }
@@ -60,14 +60,14 @@ impl UserInterface {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
-        let context = WebContext::get_default().unwrap();
-        let webview = WebView::new_with_context(&context);
+        let web_context = WebContext::get_default().unwrap();
+        let webview = WebView::new_with_context(&web_context);
 
         window.add(&webview);
 
         UserInterface {
             window, webview,
-            content_dir: tempdir().unwrap(),
+            temp_dir: tempdir().unwrap(),
         }
     }
 
@@ -84,14 +84,15 @@ impl UserInterface {
             }
             Inhibit(false)
         });
+
+        self.window.connect_delete_event(|_, _| {
+            gtk::main_quit();
+            Inhibit(false)
+        });
     }
 
     fn load_html(&mut self, html: &str) {
-        let src_root = PathBuf::from(option_env!("PWD").unwrap_or(""));
-        let src_path = src_root.join(file!()).
-            canonicalize().
-            map(|p| p.display().to_string()).
-            unwrap_or(String::new());
+        let src_root = option_env!("PWD").unwrap_or("");
         let home_path = home_dir().
             map(|p| p.display().to_string()).
             unwrap_or(String::new());
@@ -101,15 +102,15 @@ impl UserInterface {
 
         let page = format! {
             include_str!("../resources/template.html"),
-            src_path=src_path,
+            src_root=src_root,
             home_path=home_path,
             body=html,
             scroll_top=scroll_top,
         };
 
-        let html_path = self.content_dir.path().join("content.html");
+        let html_path = self.temp_dir.path().join("content.html");
         {
-            let mut f = File::create(html_path.clone()).unwrap();
+            let mut f = File::create(&html_path).unwrap();
             f.write(page.as_bytes()).unwrap();
             f.flush().unwrap();
         }
@@ -119,12 +120,6 @@ impl UserInterface {
 
     fn run(&self) {
         self.window.show_all();
-
-        self.window.connect_delete_event(|_, _| {
-            gtk::main_quit();
-            Inhibit(false)
-        });
-
         gtk::main();
     }
 }
@@ -134,6 +129,9 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<String>) {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
         let mut watcher = watcher(watcher_sender, Duration::from_millis(200)).unwrap();
         watcher.watch(&content.md_path, RecursiveMode::NonRecursive).unwrap();
+
+        // TODO
+        // watcher.watch("~/.quickmd.css", RecursiveMode::NonRecursive).unwrap();
 
         loop {
             match watcher_receiver.recv() {
