@@ -118,50 +118,68 @@ impl UserInterface {
         self.webview.load_uri(&format!("file://{}", html_path.display()));
     }
 
+    fn reload(&self) {
+        self.webview.reload();
+    }
+
     fn run(&self) {
         self.window.show_all();
         gtk::main();
     }
 }
 
-fn init_watch_loop(content: Content, gui_sender: glib::Sender<String>) {
+enum UiEvent {
+    LoadHtml(String),
+    Reload,
+}
+
+fn init_watch_loop(content: Content, gui_sender: glib::Sender<UiEvent>) {
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
         let mut watcher = watcher(watcher_sender, Duration::from_millis(200)).unwrap();
         watcher.watch(&content.md_path, RecursiveMode::NonRecursive).unwrap();
 
-        // TODO
-        // watcher.watch("~/.quickmd.css", RecursiveMode::NonRecursive).unwrap();
+        if let Some(home) = home_dir() {
+            let _ = watcher.watch(home.join(".quickmd.css"), RecursiveMode::NonRecursive);
+            let _ = watcher.watch(home.join(".config/quickmd.css"), RecursiveMode::NonRecursive);
+        }
 
         loop {
+            use notify::DebouncedEvent::*;
+
             match watcher_receiver.recv() {
-                Ok(_) => {
-                    match content.render() {
-                        Ok(html) => {
-                            let _ = gui_sender.send(html);
-                        },
-                        Err(e) => {
-                            eprintln! {
-                                "Error rendering markdown ({}): {:?}",
-                                content.md_path.display(), e
-                            };
+                Ok(Write(file)) => {
+                    if file == content.md_path {
+                        match content.render() {
+                            Ok(html) => {
+                                let _ = gui_sender.send(UiEvent::LoadHtml(html));
+                            },
+                            Err(e) => {
+                                eprintln! {
+                                    "Error rendering markdown ({}): {:?}",
+                                    content.md_path.display(), e
+                                };
+                            }
                         }
+                    } else {
+                        let _ = gui_sender.send(UiEvent::Reload);
                     }
                 },
-                Err(e) => {
-                    eprintln! {
-                        "Error watching file for changes ({}): {:?}",
-                        content.md_path.display(), e
-                    };
-                },
+                Ok(_) => {
+                    // TODO consider "verbose mode" with output
+                }
+                Err(e) => eprintln!("Error watching file for changes: {:?}", e),
             }
         }
     });
 }
 
-fn init_ui_render_loop(mut ui: UserInterface, gui_receiver: glib::Receiver<String>) {
-    gui_receiver.attach(None, move |html| {
-        ui.load_html(&html);
+fn init_ui_render_loop(mut ui: UserInterface, gui_receiver: glib::Receiver<UiEvent>) {
+    gui_receiver.attach(None, move |event| {
+        match event {
+            UiEvent::LoadHtml(html) => ui.load_html(&html),
+            UiEvent::Reload => ui.reload(),
+        }
         glib::Continue(true)
     });
 }
