@@ -1,6 +1,7 @@
 use std::env;
 use std::error::Error;
 use std::path::PathBuf;
+use std::process;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -62,9 +63,16 @@ fn init_ui_render_loop(mut ui: ui::App, gui_receiver: glib::Receiver<ui::Event>)
     });
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     better_panic::install();
 
+    if let Err(e) = run() {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
+}
+
+fn run() -> Result<(), Box<dyn Error>> {
     gtk::init()?;
 
     let input = env::args().nth(1).ok_or_else(|| {
