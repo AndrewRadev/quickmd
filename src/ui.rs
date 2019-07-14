@@ -83,14 +83,14 @@ impl App {
             unwrap_or(0.0);
 
         let page = format! {
-            include_str!("../resources/template.html"),
+            include_str!("../res/layout.html"),
             src_root=src_root,
             home_path=home_path,
             body=html,
             scroll_top=scroll_top,
         };
 
-        let html_path = self.temp_dir.path().join("content.html");
+        let html_path = self.temp_dir.path().join("output.html");
         {
             let mut f = File::create(&html_path).unwrap();
             f.write(page.as_bytes()).unwrap();
