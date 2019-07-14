@@ -7,6 +7,7 @@ use dirs::home_dir;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType, HeaderBar};
+use log::debug;
 use tempfile::{tempdir, TempDir};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
@@ -73,6 +74,11 @@ impl App {
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
 
+        debug!("Building HTML:");
+        debug!(" > src_root   = {}", src_root);
+        debug!(" > home_path  = {}", home_path);
+        debug!(" > scroll_top = {}", scroll_top);
+
         let page = format! {
             include_str!("../res/layout.html"),
             src_root=src_root,
@@ -87,6 +93,9 @@ impl App {
             f.write(page.as_bytes()).unwrap();
             f.flush().unwrap();
         }
+
+        debug!("Loading HTML:");
+        debug!(" > html_path = {}", html_path.display());
 
         self.webview.load_uri(&format!("file://{}", html_path.display()));
     }

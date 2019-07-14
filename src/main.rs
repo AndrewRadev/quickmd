@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use dirs::home_dir;
 use notify::{Watcher, RecursiveMode, watcher};
+use log::{debug, error};
 
 use quickmd::markdown::Content;
 use quickmd::ui;
@@ -28,13 +29,15 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<ui::Event>) {
 
             match watcher_receiver.recv() {
                 Ok(Write(file)) => {
+                    debug!("File updated: {}", file.display());
+
                     if file == content.canonical_md_path {
                         match content.render() {
                             Ok(html) => {
                                 let _ = gui_sender.send(ui::Event::LoadHtml(html));
                             },
                             Err(e) => {
-                                eprintln! {
+                                error! {
                                     "Error rendering markdown ({}): {:?}",
                                     content.canonical_md_path.display(), e
                                 };
@@ -44,10 +47,8 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<ui::Event>) {
                         let _ = gui_sender.send(ui::Event::Reload);
                     }
                 },
-                Ok(_) => {
-                    // TODO consider "verbose mode" with output
-                }
-                Err(e) => eprintln!("Error watching file for changes: {:?}", e),
+                Ok(event) => debug!("Ignored watcher event: {:?}", event),
+                Err(e) => error!("Error watching file for changes: {:?}", e),
             }
         }
     });
@@ -65,6 +66,7 @@ fn init_ui_render_loop(mut ui: ui::App, gui_receiver: glib::Receiver<ui::Event>)
 
 fn main() {
     better_panic::install();
+    env_logger::init();
 
     if let Err(e) = run() {
         eprintln!("{}", e);
