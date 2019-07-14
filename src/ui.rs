@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use std::rc::Rc;
 
 use dirs::home_dir;
 use gdk::enums::key;
@@ -14,22 +15,12 @@ pub enum Event {
     Reload,
 }
 
+#[derive(Clone)]
 pub struct App {
     window: Window,
     header_bar: HeaderBar,
     webview: WebView,
-    temp_dir: TempDir,
-}
-
-impl Clone for App {
-    fn clone(&self) -> Self {
-        App {
-            window: self.window.clone(),
-            header_bar: self.header_bar.clone(),
-            webview: self.webview.clone(),
-            temp_dir: tempdir().unwrap(),
-        }
-    }
+    temp_dir: Rc<TempDir>,
 }
 
 impl App {
@@ -49,7 +40,7 @@ impl App {
 
         App {
             window, header_bar, webview,
-            temp_dir: tempdir().unwrap(),
+            temp_dir: Rc::new(tempdir().unwrap()),
         }
     }
 
