@@ -16,7 +16,7 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<ui::Event>) {
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
         let mut watcher = watcher(watcher_sender, Duration::from_millis(200)).unwrap();
-        watcher.watch(&content.md_path, RecursiveMode::NonRecursive).unwrap();
+        watcher.watch(&content.canonical_md_path, RecursiveMode::NonRecursive).unwrap();
 
         if let Some(home) = home_dir() {
             let _ = watcher.watch(home.join(".quickmd.css"), RecursiveMode::NonRecursive);
@@ -28,7 +28,7 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<ui::Event>) {
 
             match watcher_receiver.recv() {
                 Ok(Write(file)) => {
-                    if file == content.md_path {
+                    if file == content.canonical_md_path {
                         match content.render() {
                             Ok(html) => {
                                 let _ = gui_sender.send(ui::Event::LoadHtml(html));
@@ -36,7 +36,7 @@ fn init_watch_loop(content: Content, gui_sender: glib::Sender<ui::Event>) {
                             Err(e) => {
                                 eprintln! {
                                     "Error rendering markdown ({}): {:?}",
-                                    content.md_path.display(), e
+                                    content.canonical_md_path.display(), e
                                 };
                             }
                         }
@@ -84,10 +84,10 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let mut ui = ui::App::init();
     let html = content.render().map_err(|e| {
-        format!("Couldn't parse markdown from file {}: {}", content.md_path.display(), e)
+        format!("Couldn't parse markdown from file {}: {}", content.canonical_md_path.display(), e)
     })?;
 
-    ui.set_filename(&content.md_path);
+    ui.set_filename(&content.display_md_path);
     ui.connect_events();
     ui.load_html(&html);
 
