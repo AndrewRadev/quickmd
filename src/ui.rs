@@ -13,6 +13,16 @@ pub enum Event {
     Reload,
 }
 
+pub fn init_render_loop(mut app: App, gui_receiver: glib::Receiver<Event>) {
+    gui_receiver.attach(None, move |event| {
+        match event {
+            Event::LoadHtml(html) => app.load_html(&html),
+            Event::Reload => app.reload(),
+        }
+        glib::Continue(true)
+    });
+}
+
 #[derive(Clone)]
 pub struct App {
     window: Window,
