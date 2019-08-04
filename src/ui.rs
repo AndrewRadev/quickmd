@@ -1,18 +1,12 @@
-use std::fs;
 use std::path::Path;
-use std::rc::Rc;
 
-use dirs::home_dir;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType, HeaderBar};
-use log::{debug, warn};
-use tempfile::{tempdir, TempDir};
+use log::debug;
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
-const MAIN_JS:    &'static str = include_str!("../res/js/main.js");
-const MAIN_CSS:   &'static str = include_str!("../res/style/main.css");
-const GITHUB_CSS: &'static str = include_str!("../res/style/github.css");
+use crate::assets::Assets;
 
 pub enum Event {
     LoadHtml(String),
@@ -24,7 +18,7 @@ pub struct App {
     window: Window,
     header_bar: HeaderBar,
     webview: WebView,
-    temp_dir: Rc<TempDir>,
+    assets: Assets,
 }
 
 impl App {
@@ -42,18 +36,9 @@ impl App {
         window.set_titlebar(&header_bar);
         window.add(&webview);
 
-        let temp_dir = tempdir().unwrap();
-        fs::write(temp_dir.path().join("main.js"), MAIN_JS).
-            unwrap_or_else(|e| warn!("{}", e));
-        fs::write(temp_dir.path().join("main.css"), MAIN_CSS).
-            unwrap_or_else(|e| warn!("{}", e));
-        fs::write(temp_dir.path().join("github.css"), GITHUB_CSS).
-            unwrap_or_else(|e| warn!("{}", e));
+        let assets = Assets::init();
 
-        App {
-            window, header_bar, webview,
-            temp_dir: Rc::new(temp_dir),
-        }
+        App { window, header_bar, webview, assets }
     }
 
     pub fn set_filename(&self, filename: &Path) {
@@ -77,26 +62,11 @@ impl App {
     }
 
     pub fn load_html(&mut self, html: &str) {
-        let home_path = home_dir().
-            map(|p| p.display().to_string()).
-            unwrap_or(String::new());
         let scroll_top = self.webview.get_title().
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
 
-        debug!("Building HTML:");
-        debug!(" > home_path  = {}", home_path);
-        debug!(" > scroll_top = {}", scroll_top);
-
-        let page = format! {
-            include_str!("../res/layout.html"),
-            home_path=home_path,
-            body=html,
-            scroll_top=scroll_top,
-        };
-
-        let output_path = self.temp_dir.path().join("output.html");
-        fs::write(&output_path, page.as_bytes()).unwrap();
+        let output_path = self.assets.build(html, scroll_top);
 
         debug!("Loading HTML:");
         debug!(" > output_path = {}", output_path.display());
