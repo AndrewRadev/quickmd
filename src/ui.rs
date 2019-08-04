@@ -1,9 +1,11 @@
+use std::error::Error;
+use std::io;
 use std::path::Path;
 
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType, HeaderBar};
-use log::debug;
+use log::{debug, warn};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
 use crate::assets::Assets;
@@ -16,7 +18,10 @@ pub enum Event {
 pub fn init_render_loop(mut app: App, gui_receiver: glib::Receiver<Event>) {
     gui_receiver.attach(None, move |event| {
         match event {
-            Event::LoadHtml(html) => app.load_html(&html),
+            Event::LoadHtml(html) => {
+                app.load_html(&html).
+                    unwrap_or_else(|e| warn!("Couldn't update HTML: {}", e))
+            },
             Event::Reload => app.reload(),
         }
         glib::Continue(true)
@@ -32,7 +37,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn init() -> Self {
+    pub fn init() -> Result<Self, Box<dyn Error>> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -40,15 +45,15 @@ impl App {
         header_bar.set_title("Quickmd");
         header_bar.set_show_close_button(true);
 
-        let web_context = WebContext::get_default().unwrap();
+        let web_context = WebContext::get_default().ok_or_else(|| format!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
         window.set_titlebar(&header_bar);
         window.add(&webview);
 
-        let assets = Assets::init();
+        let assets = Assets::init()?;
 
-        App { window, header_bar, webview, assets }
+        Ok(App { window, header_bar, webview, assets })
     }
 
     pub fn set_filename(&self, filename: &Path) {
@@ -71,17 +76,18 @@ impl App {
         });
     }
 
-    pub fn load_html(&mut self, html: &str) {
+    pub fn load_html(&mut self, html: &str) -> Result<(), io::Error> {
         let scroll_top = self.webview.get_title().
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
 
-        let output_path = self.assets.build(html, scroll_top);
+        let output_path = self.assets.build(html, scroll_top)?;
 
         debug!("Loading HTML:");
         debug!(" > output_path = {}", output_path.display());
 
         self.webview.load_uri(&format!("file://{}", output_path.display()));
+        Ok(())
     }
 
     pub fn reload(&self) {

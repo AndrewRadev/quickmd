@@ -50,14 +50,16 @@ fn run() -> Result<(), Box<dyn Error>> {
     let md_path  = PathBuf::from(&input);
     let renderer = Renderer::new(md_path);
 
-    let mut ui = ui::App::init();
+    let mut ui = ui::App::init()?;
     let html = renderer.run().map_err(|e| {
         format!("Couldn't parse markdown from file {}: {}", renderer.canonical_md_path.display(), e)
     })?;
 
     ui.set_filename(&renderer.display_md_path);
     ui.connect_events();
-    ui.load_html(&html);
+    ui.load_html(&html).map_err(|e| {
+        format!("Couldn't load HTML in the UI: {}", e)
+    })?;
 
     let (gui_sender, gui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
 

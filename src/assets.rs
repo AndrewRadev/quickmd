@@ -1,3 +1,4 @@
+use std::io;
 use std::fs;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -16,8 +17,8 @@ pub struct Assets {
 }
 
 impl Assets {
-    pub fn init() -> Self {
-        let temp_dir = tempdir().unwrap();
+    pub fn init() -> Result<Self, io::Error> {
+        let temp_dir = tempdir()?;
 
         fs::write(temp_dir.path().join("main.js"), MAIN_JS).
             unwrap_or_else(|e| warn!("{}", e));
@@ -26,10 +27,10 @@ impl Assets {
         fs::write(temp_dir.path().join("github.css"), GITHUB_CSS).
             unwrap_or_else(|e| warn!("{}", e));
 
-        Assets { temp_dir: Rc::new(temp_dir) }
+        Ok(Assets { temp_dir: Rc::new(temp_dir) })
     }
 
-    pub fn build(&self, html: &str, scroll_top: f64) -> PathBuf {
+    pub fn build(&self, html: &str, scroll_top: f64) -> Result<PathBuf, io::Error> {
         let home_path = home_dir().
             map(|p| p.display().to_string()).
             unwrap_or(String::new());
@@ -46,8 +47,8 @@ impl Assets {
         };
 
         let output_path = self.temp_dir.path().join("output.html");
-        fs::write(&output_path, page.as_bytes()).unwrap();
+        fs::write(&output_path, page.as_bytes())?;
 
-        output_path
+        Ok(output_path)
     }
 }
