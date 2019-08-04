@@ -42,9 +42,17 @@ impl App {
         window.set_titlebar(&header_bar);
         window.add(&webview);
 
+        let temp_dir = tempdir().unwrap();
+        fs::write(temp_dir.path().join("main.js"), MAIN_JS).
+            unwrap_or_else(|e| warn!("{}", e));
+        fs::write(temp_dir.path().join("main.css"), MAIN_CSS).
+            unwrap_or_else(|e| warn!("{}", e));
+        fs::write(temp_dir.path().join("github.css"), GITHUB_CSS).
+            unwrap_or_else(|e| warn!("{}", e));
+
         App {
             window, header_bar, webview,
-            temp_dir: Rc::new(tempdir().unwrap()),
+            temp_dir: Rc::new(temp_dir),
         }
     }
 
@@ -79,10 +87,6 @@ impl App {
         debug!("Building HTML:");
         debug!(" > home_path  = {}", home_path);
         debug!(" > scroll_top = {}", scroll_top);
-
-        fs::write(self.temp_dir.path().join("main.js"), MAIN_JS).unwrap_or_else(|e| warn!("{}", e));
-        fs::write(self.temp_dir.path().join("main.css"), MAIN_CSS).unwrap_or_else(|e| warn!("{}", e));
-        fs::write(self.temp_dir.path().join("github.css"), GITHUB_CSS).unwrap_or_else(|e| warn!("{}", e));
 
         let page = format! {
             include_str!("../res/layout.html"),
