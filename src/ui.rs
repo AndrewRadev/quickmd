@@ -1,5 +1,4 @@
-use std::fs::File;
-use std::io::Write;
+use std::fs;
 use std::path::Path;
 use std::rc::Rc;
 
@@ -7,9 +6,13 @@ use dirs::home_dir;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType, HeaderBar};
-use log::debug;
+use log::{debug, warn};
 use tempfile::{tempdir, TempDir};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
+
+const MAIN_JS:    &'static str = include_str!("../res/js/main.js");
+const MAIN_CSS:   &'static str = include_str!("../res/style/main.css");
+const GITHUB_CSS: &'static str = include_str!("../res/style/github.css");
 
 pub enum Event {
     LoadHtml(String),
@@ -66,7 +69,6 @@ impl App {
     }
 
     pub fn load_html(&mut self, html: &str) {
-        let src_root = option_env!("PWD").unwrap_or("");
         let home_path = home_dir().
             map(|p| p.display().to_string()).
             unwrap_or(String::new());
@@ -75,29 +77,27 @@ impl App {
             unwrap_or(0.0);
 
         debug!("Building HTML:");
-        debug!(" > src_root   = {}", src_root);
         debug!(" > home_path  = {}", home_path);
         debug!(" > scroll_top = {}", scroll_top);
 
+        fs::write(self.temp_dir.path().join("main.js"), MAIN_JS).unwrap_or_else(|e| warn!("{}", e));
+        fs::write(self.temp_dir.path().join("main.css"), MAIN_CSS).unwrap_or_else(|e| warn!("{}", e));
+        fs::write(self.temp_dir.path().join("github.css"), GITHUB_CSS).unwrap_or_else(|e| warn!("{}", e));
+
         let page = format! {
             include_str!("../res/layout.html"),
-            src_root=src_root,
             home_path=home_path,
             body=html,
             scroll_top=scroll_top,
         };
 
-        let html_path = self.temp_dir.path().join("output.html");
-        {
-            let mut f = File::create(&html_path).unwrap();
-            f.write(page.as_bytes()).unwrap();
-            f.flush().unwrap();
-        }
+        let output_path = self.temp_dir.path().join("output.html");
+        fs::write(&output_path, page.as_bytes()).unwrap();
 
         debug!("Loading HTML:");
-        debug!(" > html_path = {}", html_path.display());
+        debug!(" > output_path = {}", output_path.display());
 
-        self.webview.load_uri(&format!("file://{}", html_path.display()));
+        self.webview.load_uri(&format!("file://{}", output_path.display()));
     }
 
     pub fn reload(&self) {
