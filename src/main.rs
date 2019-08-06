@@ -27,29 +27,6 @@ fn main() {
     process::exit(application.run(&[]));
 }
 
-fn init_logging() {
-    // Release logging:
-    // - Warnings and errors
-    // - No timestamps
-    // - No module info
-    //
-    #[cfg(not(debug_assertions))]
-    env_logger::builder().
-        default_format_module_path(false).
-        default_format_timestamp(false).
-        filter_level(log::LevelFilter::Warn).
-        init();
-
-    // Debug logging:
-    // - All logs
-    // - Full info
-    //
-    #[cfg(debug_assertions)]
-    env_logger::builder().
-        filter_level(log::LevelFilter::Debug).
-        init();
-}
-
 fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
     let input = env::args().nth(1).ok_or_else(|| {
         format!("USAGE: quickmd <file.md>")
@@ -76,4 +53,27 @@ fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
 
     ui.show();
     Ok(())
+}
+
+fn init_logging() {
+    // Release logging:
+    // - Warnings and errors
+    // - No timestamps
+    // - No module info
+    //
+    #[cfg(not(debug_assertions))]
+    env_logger::builder().
+        default_format_module_path(false).
+        default_format_timestamp(false).
+        filter_level(log::LevelFilter::Warn).
+        init();
+
+    // Debug logging:
+    // - All logs
+    // - Full info
+    //
+    #[cfg(debug_assertions)]
+    env_logger::builder().
+        filter_level(log::LevelFilter::Debug).
+        init();
 }
