@@ -8,7 +8,6 @@ use quickmd::ui;
 use quickmd::background;
 
 fn main() {
-    better_panic::install();
     init_logging();
 
     if let Err(e) = run() {

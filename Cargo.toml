@@ -13,7 +13,6 @@ tempfile = "*"
 glib = "0.7.1"
 gio = "0.6.0"
 gdk = "0.10.0"
-better-panic = "*"
 log = "0.4"
 env_logger = "*"
 
