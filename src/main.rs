@@ -58,7 +58,7 @@ fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
     let md_path  = PathBuf::from(&input);
     let renderer = Renderer::new(md_path);
 
-    let mut ui = ui::App::init(gtk_app)?;
+    let mut ui = ui::MainWindow::open(gtk_app)?;
     let html = renderer.run().map_err(|e| {
         format!("Couldn't parse markdown from file {}: {}", renderer.canonical_md_path.display(), e)
     })?;
@@ -74,6 +74,6 @@ fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
     ui::init_render_loop(ui.clone(), gui_receiver);
     background::init_update_loop(renderer.clone(), gui_sender);
 
-    ui.run();
+    ui.show();
     Ok(())
 }

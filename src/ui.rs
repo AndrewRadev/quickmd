@@ -15,7 +15,7 @@ pub enum Event {
     Reload,
 }
 
-pub fn init_render_loop(mut app: App, gui_receiver: glib::Receiver<Event>) {
+pub fn init_render_loop(mut app: MainWindow, gui_receiver: glib::Receiver<Event>) {
     gui_receiver.attach(None, move |event| {
         match event {
             Event::LoadHtml(html) => {
@@ -29,18 +29,18 @@ pub fn init_render_loop(mut app: App, gui_receiver: glib::Receiver<Event>) {
 }
 
 #[derive(Clone)]
-pub struct App {
-    window: ApplicationWindow,
+pub struct MainWindow {
+    gtk_window: ApplicationWindow,
     header_bar: HeaderBar,
     webview: WebView,
     assets: Assets,
 }
 
-impl App {
-    pub fn init(gtk_app: &gtk::Application) -> Result<Self, Box<dyn Error>> {
-        let window = ApplicationWindow::new(gtk_app);
-        window.set_position(gtk::WindowPosition::Center);
-        window.set_default_size(1024, 768);
+impl MainWindow {
+    pub fn open(gtk_app: &gtk::Application) -> Result<Self, Box<dyn Error>> {
+        let gtk_window = ApplicationWindow::new(gtk_app);
+        gtk_window.set_position(gtk::WindowPosition::Center);
+        gtk_window.set_default_size(1024, 768);
 
         let header_bar = HeaderBar::new();
         header_bar.set_title("Quickmd");
@@ -50,12 +50,12 @@ impl App {
             ok_or_else(|| format!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
-        window.set_titlebar(&header_bar);
-        window.add(&webview);
+        gtk_window.set_titlebar(&header_bar);
+        gtk_window.add(&webview);
 
         let assets = Assets::init()?;
 
-        Ok(App { window, header_bar, webview, assets })
+        Ok(MainWindow { gtk_window, header_bar, webview, assets })
     }
 
     pub fn set_filename(&self, filename: &Path) {
@@ -64,7 +64,7 @@ impl App {
 
     pub fn connect_events(&self) {
         // Each key press will invoke this function.
-        self.window.connect_key_press_event(move |_window, gdk| {
+        self.gtk_window.connect_key_press_event(move |_window, gdk| {
             match gdk.get_keyval() {
                 key::Escape => gtk::main_quit(),
                 _ => (),
@@ -72,7 +72,7 @@ impl App {
             Inhibit(false)
         });
 
-        self.window.connect_delete_event(|_, _| {
+        self.gtk_window.connect_delete_event(|_, _| {
             gtk::main_quit();
             Inhibit(false)
         });
@@ -96,8 +96,8 @@ impl App {
         self.webview.reload();
     }
 
-    pub fn run(&self) {
-        self.window.show_all();
+    pub fn show(&self) {
+        self.gtk_window.show_all();
         gtk::main();
     }
 }
