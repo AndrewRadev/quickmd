@@ -98,6 +98,5 @@ impl MainWindow {
 
     pub fn show(&self) {
         self.gtk_window.show_all();
-        gtk::main();
     }
 }
