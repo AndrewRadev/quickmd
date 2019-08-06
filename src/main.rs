@@ -2,6 +2,7 @@ use std::env;
 use std::error::Error;
 use std::path::PathBuf;
 use std::process;
+use std::cell::RefCell;
 
 use gio::prelude::{ApplicationExt, ApplicationExtManual};
 
@@ -14,20 +15,33 @@ const APP_NAME: &'static str = "com.andrewradev.quickmd";
 fn main() {
     init_logging();
 
-    let application = gtk::Application::new(Some(APP_NAME), Default::default()).
+    let gtk_app = gtk::Application::new(Some(APP_NAME), Default::default()).
         expect("GTK initialization failed");
+    let app = ui::App::new(gtk_app);
 
-    application.connect_activate(|app| {
-        if let Err(e) = run(&app) {
+    let app_container = RefCell::new(Some(app.clone()));
+    app.gtk_app.connect_activate(move |_| {
+        let app = app_container.borrow_mut().take().
+            expect("connect_activate called multiple times");
+
+        if let Err(e) = run(app) {
             eprintln!("{}", e);
             process::exit(1);
         }
     });
 
-    process::exit(application.run(&[]));
+    let app_container = RefCell::new(Some(app.clone()));
+    app.gtk_app.connect_shutdown(move |_| {
+        let app = app_container.borrow_mut().take().
+            expect("Shutdown called multiple times");
+        // TODO need to clear out tmpdir upon shutdown
+        drop(app);
+    });
+
+    process::exit(app.gtk_app.run(&[]));
 }
 
-fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
+fn run(app: ui::App) -> Result<(), Box<dyn Error>> {
     let input = env::args().nth(1).ok_or_else(|| {
         format!("USAGE: quickmd <file.md>")
     })?;
@@ -35,13 +49,13 @@ fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
     let md_path  = PathBuf::from(&input);
     let renderer = Renderer::new(md_path);
 
-    let mut ui = ui::MainWindow::open(gtk_app)?;
+    let mut ui = ui::MainWindow::new(app.clone())?;
     let html = renderer.run().map_err(|e| {
         format!("Couldn't parse markdown from file {}: {}", renderer.canonical_md_path.display(), e)
     })?;
 
     ui.set_filename(&renderer.display_md_path);
-    ui.connect_events();
+    ui.connect_events(app.clone());
     ui.load_html(&html).map_err(|e| {
         format!("Couldn't load HTML in the UI: {}", e)
     })?;

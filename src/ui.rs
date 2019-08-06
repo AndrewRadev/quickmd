@@ -1,7 +1,10 @@
 use std::error::Error;
 use std::io;
 use std::path::Path;
+use std::rc::Rc;
+use std::convert::AsRef;
 
+use gio::ApplicationExt;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, HeaderBar};
@@ -29,6 +32,28 @@ pub fn init_render_loop(mut app: MainWindow, gui_receiver: glib::Receiver<Event>
 }
 
 #[derive(Clone)]
+pub struct App {
+    pub gtk_app: Rc<gtk::Application>,
+}
+
+impl App {
+    pub fn new(gtk_app: gtk::Application) -> Self {
+        let gtk_app = Rc::new(gtk_app);
+        App { gtk_app }
+    }
+
+    pub fn quit(&self) {
+        self.gtk_app.quit();
+    }
+}
+
+impl AsRef<gtk::Application> for App {
+    fn as_ref(&self) -> &gtk::Application {
+        &self.gtk_app
+    }
+}
+
+#[derive(Clone)]
 pub struct MainWindow {
     gtk_window: ApplicationWindow,
     header_bar: HeaderBar,
@@ -37,8 +62,8 @@ pub struct MainWindow {
 }
 
 impl MainWindow {
-    pub fn open(gtk_app: &gtk::Application) -> Result<Self, Box<dyn Error>> {
-        let gtk_window = ApplicationWindow::new(gtk_app);
+    pub fn new(app: App) -> Result<Self, Box<dyn Error>> {
+        let gtk_window = ApplicationWindow::new(app.as_ref());
         gtk_window.set_position(gtk::WindowPosition::Center);
         gtk_window.set_default_size(1024, 768);
 
@@ -62,18 +87,20 @@ impl MainWindow {
         self.header_bar.set_title(filename.to_str());
     }
 
-    pub fn connect_events(&self) {
+    pub fn connect_events(&self, app: App) {
         // Each key press will invoke this function.
+        let app_clone = app.clone();
         self.gtk_window.connect_key_press_event(move |_window, gdk| {
             match gdk.get_keyval() {
-                key::Escape => gtk::main_quit(),
+                key::Escape => app_clone.quit(),
                 _ => (),
             }
             Inhibit(false)
         });
 
-        self.gtk_window.connect_delete_event(|_, _| {
-            gtk::main_quit();
+        let app_clone = app.clone();
+        self.gtk_window.connect_delete_event(move |_, _| {
+            app_clone.quit();
             Inhibit(false)
         });
     }
