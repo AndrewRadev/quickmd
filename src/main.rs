@@ -3,17 +3,28 @@ use std::error::Error;
 use std::path::PathBuf;
 use std::process;
 
+use gio::prelude::{ApplicationExt, ApplicationExtManual};
+
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 use quickmd::background;
 
+const APP_NAME: &'static str = "com.andrewradev.quickmd";
+
 fn main() {
     init_logging();
 
-    if let Err(e) = run() {
-        eprintln!("{}", e);
-        process::exit(1);
-    }
+    let application = gtk::Application::new(Some(APP_NAME), Default::default()).
+        expect("GTK initialization failed");
+
+    application.connect_activate(|app| {
+        if let Err(e) = run(&app) {
+            eprintln!("{}", e);
+            process::exit(1);
+        }
+    });
+
+    process::exit(application.run(&[]));
 }
 
 fn init_logging() {
@@ -39,9 +50,7 @@ fn init_logging() {
         init();
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
-    gtk::init()?;
-
+fn run(gtk_app: &gtk::Application) -> Result<(), Box<dyn Error>> {
     let input = env::args().nth(1).ok_or_else(|| {
         format!("USAGE: quickmd <file.md>")
     })?;
@@ -49,7 +58,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let md_path  = PathBuf::from(&input);
     let renderer = Renderer::new(md_path);
 
-    let mut ui = ui::App::init()?;
+    let mut ui = ui::App::init(gtk_app)?;
     let html = renderer.run().map_err(|e| {
         format!("Couldn't parse markdown from file {}: {}", renderer.canonical_md_path.display(), e)
     })?;

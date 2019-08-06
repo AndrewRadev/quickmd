@@ -4,7 +4,7 @@ use std::path::Path;
 
 use gdk::enums::key;
 use gtk::prelude::*;
-use gtk::{Window, WindowType, HeaderBar};
+use gtk::{ApplicationWindow, HeaderBar};
 use log::{debug, warn};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
@@ -30,22 +30,24 @@ pub fn init_render_loop(mut app: App, gui_receiver: glib::Receiver<Event>) {
 
 #[derive(Clone)]
 pub struct App {
-    window: Window,
+    window: ApplicationWindow,
     header_bar: HeaderBar,
     webview: WebView,
     assets: Assets,
 }
 
 impl App {
-    pub fn init() -> Result<Self, Box<dyn Error>> {
-        let window = Window::new(WindowType::Toplevel);
+    pub fn init(gtk_app: &gtk::Application) -> Result<Self, Box<dyn Error>> {
+        let window = ApplicationWindow::new(gtk_app);
+        window.set_position(gtk::WindowPosition::Center);
         window.set_default_size(1024, 768);
 
         let header_bar = HeaderBar::new();
         header_bar.set_title("Quickmd");
         header_bar.set_show_close_button(true);
 
-        let web_context = WebContext::get_default().ok_or_else(|| format!("Couldn't initialize GTK WebContext"))?;
+        let web_context = WebContext::get_default().
+            ok_or_else(|| format!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
         window.set_titlebar(&header_bar);
