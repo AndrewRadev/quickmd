@@ -1,7 +1,5 @@
-use std::convert::AsRef;
 use std::error::Error;
 use std::path::Path;
-use std::rc::Rc;
 
 use gdk::enums::key;
 use gtk::prelude::*;
@@ -30,24 +28,6 @@ pub fn init_render_loop(mut window: MainWindow, gui_receiver: glib::Receiver<Eve
 }
 
 #[derive(Clone)]
-pub struct App {
-    pub gtk_app: Rc<gtk::Application>,
-}
-
-impl App {
-    pub fn new(gtk_app: gtk::Application) -> Self {
-        let gtk_app = Rc::new(gtk_app);
-        App { gtk_app }
-    }
-}
-
-impl AsRef<gtk::Application> for App {
-    fn as_ref(&self) -> &gtk::Application {
-        &self.gtk_app
-    }
-}
-
-#[derive(Clone)]
 pub struct MainWindow {
     gtk_window: ApplicationWindow,
     header_bar: HeaderBar,
@@ -56,8 +36,8 @@ pub struct MainWindow {
 }
 
 impl MainWindow {
-    pub fn new(app: App) -> Result<Self, Box<dyn Error>> {
-        let gtk_window = ApplicationWindow::new(app.as_ref());
+    pub fn new(app: &gtk::Application) -> Result<Self, Box<dyn Error>> {
+        let gtk_window = ApplicationWindow::new(app);
         gtk_window.set_position(gtk::WindowPosition::Center);
         gtk_window.set_default_size(1024, 768);
 
