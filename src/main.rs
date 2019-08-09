@@ -30,14 +30,6 @@ fn main() {
         }
     });
 
-    let app_container = RefCell::new(Some(app.clone()));
-    app.gtk_app.connect_shutdown(move |_| {
-        let app = app_container.borrow_mut().take().
-            expect("Shutdown called multiple times");
-        // TODO need to clear out tmpdir upon shutdown
-        drop(app);
-    });
-
     process::exit(app.gtk_app.run(&[]));
 }
 
@@ -55,7 +47,7 @@ fn run(app: ui::App) -> Result<(), Box<dyn Error>> {
     })?;
 
     ui.set_filename(&renderer.display_md_path);
-    ui.connect_events(app.clone());
+    ui.connect_events();
     ui.load_html(&html).map_err(|e| {
         format!("Couldn't load HTML in the UI: {}", e)
     })?;

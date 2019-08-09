@@ -1,10 +1,8 @@
+use std::convert::AsRef;
 use std::error::Error;
-use std::io;
 use std::path::Path;
 use std::rc::Rc;
-use std::convert::AsRef;
 
-use gio::ApplicationExt;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{ApplicationWindow, HeaderBar};
@@ -40,10 +38,6 @@ impl App {
     pub fn new(gtk_app: gtk::Application) -> Self {
         let gtk_app = Rc::new(gtk_app);
         App { gtk_app }
-    }
-
-    pub fn quit(&self) {
-        self.gtk_app.quit();
     }
 }
 
@@ -87,25 +81,20 @@ impl MainWindow {
         self.header_bar.set_title(filename.to_str());
     }
 
-    pub fn connect_events(&self, app: App) {
+    pub fn connect_events(&self) {
         // Each key press will invoke this function.
-        let app_clone = app.clone();
+        use std::cell::RefCell;
+        let self_clone = RefCell::new(Some(self.clone()));
         self.gtk_window.connect_key_press_event(move |_window, gdk| {
             match gdk.get_keyval() {
-                key::Escape => app_clone.quit(),
+                key::Escape => self_clone.borrow_mut().take().unwrap().close(),
                 _ => (),
             }
             Inhibit(false)
         });
-
-        let app_clone = app.clone();
-        self.gtk_window.connect_delete_event(move |_, _| {
-            app_clone.quit();
-            Inhibit(false)
-        });
     }
 
-    pub fn load_html(&mut self, html: &str) -> Result<(), io::Error> {
+    pub fn load_html(&mut self, html: &str) -> Result<(), Box<dyn Error>> {
         let scroll_top = self.webview.get_title().
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
@@ -125,5 +114,10 @@ impl MainWindow {
 
     pub fn show(&self) {
         self.gtk_window.show_all();
+    }
+
+    pub fn close(&mut self) {
+        self.assets.delete();
+        self.gtk_window.close();
     }
 }
