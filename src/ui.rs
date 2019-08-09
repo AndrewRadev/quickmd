@@ -18,14 +18,14 @@ pub enum Event {
     Reload,
 }
 
-pub fn init_render_loop(mut app: MainWindow, gui_receiver: glib::Receiver<Event>) {
+pub fn init_render_loop(mut window: MainWindow, gui_receiver: glib::Receiver<Event>) {
     gui_receiver.attach(None, move |event| {
         match event {
             Event::LoadHtml(html) => {
-                app.load_html(&html).
+                window.load_html(&html).
                     unwrap_or_else(|e| warn!("Couldn't update HTML: {}", e))
             },
-            Event::Reload => app.reload(),
+            Event::Reload => window.reload(),
         }
         glib::Continue(true)
     });
