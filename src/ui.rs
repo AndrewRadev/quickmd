@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::io;
 use std::path::Path;
 
 use gdk::enums::key;
@@ -61,10 +60,16 @@ impl App {
     }
 
     pub fn connect_events(&self) {
+        use std::cell::RefCell;
+        let self_clone = RefCell::new(Some(self.clone()));
+
         // Each key press will invoke this function.
         self.window.connect_key_press_event(move |_window, gdk| {
             match gdk.get_keyval() {
-                key::Escape => gtk::main_quit(),
+                key::Escape => {
+                    self_clone.borrow_mut().take().unwrap().assets.delete();
+                    gtk::main_quit()
+                },
                 _ => (),
             }
             Inhibit(false)
@@ -76,7 +81,7 @@ impl App {
         });
     }
 
-    pub fn load_html(&mut self, html: &str) -> Result<(), io::Error> {
+    pub fn load_html(&mut self, html: &str) -> Result<(), Box<dyn Error>> {
         let scroll_top = self.webview.get_title().
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
