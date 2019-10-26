@@ -16,29 +16,6 @@ fn main() {
     }
 }
 
-fn init_logging() {
-    // Release logging:
-    // - Warnings and errors
-    // - No timestamps
-    // - No module info
-    //
-    #[cfg(not(debug_assertions))]
-    env_logger::builder().
-        default_format_module_path(false).
-        default_format_timestamp(false).
-        filter_level(log::LevelFilter::Warn).
-        init();
-
-    // Debug logging:
-    // - All logs
-    // - Full info
-    //
-    #[cfg(debug_assertions)]
-    env_logger::builder().
-        filter_level(log::LevelFilter::Debug).
-        init();
-}
-
 fn run() -> Result<(), Box<dyn Error>> {
     gtk::init()?;
 
@@ -67,4 +44,27 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     ui.run();
     Ok(())
+}
+
+fn init_logging() {
+    // Release logging:
+    // - Warnings and errors
+    // - No timestamps
+    // - No module info
+    //
+    #[cfg(not(debug_assertions))]
+    env_logger::builder().
+        default_format_module_path(false).
+        default_format_timestamp(false).
+        filter_level(log::LevelFilter::Warn).
+        init();
+
+    // Debug logging:
+    // - All logs
+    // - Full info
+    //
+    #[cfg(debug_assertions)]
+    env_logger::builder().
+        filter_level(log::LevelFilter::Debug).
+        init();
 }
