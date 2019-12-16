@@ -1,9 +1,12 @@
 use std::env;
 use std::error::Error;
+use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process;
 
 use gio::prelude::{ApplicationExt, ApplicationExtManual};
+use gio::ApplicationCommandLineExt;
+use gio::ApplicationFlags;
 
 use quickmd::markdown::Renderer;
 use quickmd::ui;
@@ -14,21 +17,25 @@ const APP_NAME: &'static str = "com.andrewradev.quickmd";
 fn main() {
     init_logging();
 
-    let app = gtk::Application::new(Some(APP_NAME), Default::default()).
-        expect("GTK initialization failed");
+    let app = gtk::Application::new(
+        Some(APP_NAME),
+        ApplicationFlags::HANDLES_OPEN | ApplicationFlags::HANDLES_COMMAND_LINE
+    ).expect("GTK initialization failed");
 
-    app.connect_activate(move |app| {
-        if let Err(e) = run(&app) {
+    app.connect_command_line(move |app, cmdline| {
+        if let Err(e) = run(&app, cmdline.get_arguments()) {
             eprintln!("{}", e);
-            process::exit(1);
+            1
+        } else {
+            0
         }
     });
 
-    process::exit(app.run(&[]));
+    process::exit(app.run(&env::args().collect::<Vec<_>>()));
 }
 
-fn run(app: &gtk::Application) -> Result<(), Box<dyn Error>> {
-    let input = env::args().nth(1).ok_or_else(|| {
+fn run(app: &gtk::Application, args: Vec<OsString>) -> Result<(), Box<dyn Error>> {
+    let input = args.get(1).ok_or_else(|| {
         format!("USAGE: quickmd <file.md>")
     })?;
 
