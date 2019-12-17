@@ -4,8 +4,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process;
 
-use gio::prelude::{ApplicationExt, ApplicationExtManual};
-use gio::ApplicationCommandLineExt;
+use gio::prelude::*;
 use gio::ApplicationFlags;
 
 use quickmd::markdown::Renderer;
