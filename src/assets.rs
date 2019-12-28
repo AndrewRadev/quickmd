@@ -2,8 +2,8 @@ use std::io;
 use std::fs;
 use std::path::PathBuf;
 use std::rc::Rc;
-use std::error::Error;
 
+use anyhow::anyhow;
 use dirs::home_dir;
 use tempfile::{tempdir, TempDir};
 use log::{debug, warn};
@@ -31,9 +31,9 @@ impl Assets {
         Ok(Assets { temp_dir: Some(Rc::new(temp_dir)) })
     }
 
-    pub fn build(&self, html: &str, scroll_top: f64) -> Result<PathBuf, Box<dyn Error>> {
+    pub fn build(&self, html: &str, scroll_top: f64) -> anyhow::Result<PathBuf> {
         let temp_dir = self.temp_dir.clone().
-            ok_or("TempDir deleted, there might be a synchronization error")?;
+            ok_or_else(|| anyhow!("TempDir deleted, there might be a synchronization error"))?;
 
         let home_path = home_dir().
             map(|p| p.display().to_string()).

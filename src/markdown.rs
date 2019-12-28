@@ -3,7 +3,6 @@ use std::io;
 use std::path::PathBuf;
 use pulldown_cmark::{Parser, html};
 
-#[derive(Clone)]
 pub struct Renderer {
     pub display_md_path: PathBuf,
     pub canonical_md_path: PathBuf,

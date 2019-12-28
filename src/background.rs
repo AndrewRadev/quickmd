@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use dirs::home_dir;
 use log::{debug, error, warn};
-use notify::{Watcher, RecursiveMode, watcher};
+use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
 
 use crate::ui;
 use crate::markdown;
@@ -12,6 +12,11 @@ use crate::markdown;
 pub fn init_update_loop(renderer: markdown::Renderer, gui_sender: glib::Sender<ui::Event>) {
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
+
+        // Initial render
+        if let Err(e) = watcher_sender.send(DebouncedEvent::Write(renderer.canonical_md_path.clone())) {
+            error!("Couldn't render markdown: {}", e);
+        }
 
         let mut watcher = match watcher(watcher_sender, Duration::from_millis(200)) {
             Ok(w) => w,
@@ -35,10 +40,8 @@ pub fn init_update_loop(renderer: markdown::Renderer, gui_sender: glib::Sender<u
         }
 
         loop {
-            use notify::DebouncedEvent::*;
-
             match watcher_receiver.recv() {
-                Ok(Write(file)) => {
+                Ok(DebouncedEvent::Write(file)) => {
                     debug!("File updated: {}", file.display());
 
                     if file == renderer.canonical_md_path {

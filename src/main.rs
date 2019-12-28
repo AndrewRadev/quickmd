@@ -1,7 +1,8 @@
 use std::env;
-use std::error::Error;
 use std::path::PathBuf;
 use std::process;
+
+use anyhow::anyhow;
 
 use quickmd::markdown::Renderer;
 use quickmd::ui;
@@ -16,31 +17,29 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> anyhow::Result<()> {
     gtk::init()?;
 
     let input = env::args().nth(1).ok_or_else(|| {
-        format!("USAGE: quickmd <file.md>")
+        anyhow!("USAGE: quickmd <file.md>")
     })?;
 
-    let md_path  = PathBuf::from(&input);
+    let md_path = PathBuf::from(&input);
+    if !md_path.exists() {
+        let error = anyhow!("File not found: {}", md_path.display());
+        return Err(error);
+    }
     let renderer = Renderer::new(md_path);
 
-    let mut ui = ui::App::init()?;
-    let html = renderer.run().map_err(|e| {
-        format!("Couldn't parse markdown from file {}: {}", renderer.canonical_md_path.display(), e)
-    })?;
+    let ui = ui::App::init()?;
 
     ui.set_filename(&renderer.display_md_path);
     ui.connect_events();
-    ui.load_html(&html).map_err(|e| {
-        format!("Couldn't load HTML in the UI: {}", e)
-    })?;
 
     let (gui_sender, gui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
 
     ui::init_render_loop(ui.clone(), gui_receiver);
-    background::init_update_loop(renderer.clone(), gui_sender);
+    background::init_update_loop(renderer, gui_sender);
 
     ui.run();
     Ok(())

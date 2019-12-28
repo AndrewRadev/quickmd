@@ -1,6 +1,6 @@
-use std::error::Error;
 use std::path::Path;
 
+use anyhow::anyhow;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType, HeaderBar};
@@ -36,7 +36,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn init() -> Result<Self, Box<dyn Error>> {
+    pub fn init() -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -44,7 +44,7 @@ impl App {
         header_bar.set_title("Quickmd");
         header_bar.set_show_close_button(true);
 
-        let web_context = WebContext::get_default().ok_or_else(|| format!("Couldn't initialize GTK WebContext"))?;
+        let web_context = WebContext::get_default().ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
         window.set_titlebar(&header_bar);
@@ -81,7 +81,7 @@ impl App {
         });
     }
 
-    pub fn load_html(&mut self, html: &str) -> Result<(), Box<dyn Error>> {
+    pub fn load_html(&mut self, html: &str) -> anyhow::Result<()> {
         let scroll_top = self.webview.get_title().
             and_then(|t| t.parse::<f64>().ok()).
             unwrap_or(0.0);
