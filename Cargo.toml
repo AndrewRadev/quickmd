@@ -5,18 +5,15 @@ authors = ["Andrew Radev <andrey.radev@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-webkit2gtk = "*"
-pulldown-cmark = "*"
-notify = "*"
-dirs = "*"
-tempfile = "*"
-glib = "0.7.1"
-gio = "0.6.0"
+anyhow = "1.0.26"
+dirs = "2.0.1"
+env_logger = "0.6.2"
 gdk = "0.10.0"
+gio = "0.6.0"
+glib = "0.7.1"
+gtk = { version = "0.6.0", features = ["v3_16"] }
 log = "0.4"
-env_logger = "*"
-anyhow = "*"
-
-[dependencies.gtk]
-version = "0.6.0"
-features = ["v3_16"]
+notify = "4.0.12"
+pulldown-cmark = "0.5.2"
+tempfile = "3.0.8"
+webkit2gtk = "0.7.0"
