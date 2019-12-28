@@ -15,6 +15,7 @@ gio = "0.6.0"
 gdk = "0.10.0"
 log = "0.4"
 env_logger = "*"
+anyhow = "*"
 
 [dependencies.gtk]
 version = "0.6.0"
