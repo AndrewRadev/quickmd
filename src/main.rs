@@ -1,30 +1,40 @@
-use std::env;
 use std::path::PathBuf;
 use std::process;
 
 use anyhow::anyhow;
+use structopt::StructOpt;
 
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 use quickmd::background;
 
-fn main() {
-    init_logging();
+#[derive(Debug, StructOpt)]
+#[structopt(name = "quickmd", about = "A simple markdown previewer.")]
+struct Options {
+    /// Activate debug logging
+    #[structopt(short, long)]
+    debug: bool,
 
-    if let Err(e) = run() {
+    /// Markdown file to render
+    #[structopt(name = "input-file.md", parse(from_os_str))]
+    input: PathBuf,
+}
+
+fn main() {
+    let options = Options::from_args();
+
+    init_logging(&options);
+
+    if let Err(e) = run(&options) {
         eprintln!("{}", e);
         process::exit(1);
     }
 }
 
-fn run() -> anyhow::Result<()> {
+fn run(options: &Options) -> anyhow::Result<()> {
     gtk::init()?;
 
-    let input = env::args().nth(1).ok_or_else(|| {
-        anyhow!("USAGE: quickmd <file.md>")
-    })?;
-
-    let md_path = PathBuf::from(&input);
+    let md_path = options.input.clone();
     if !md_path.exists() {
         let error = anyhow!("File not found: {}", md_path.display());
         return Err(error);
@@ -45,25 +55,21 @@ fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_logging() {
-    // Release logging:
-    // - Warnings and errors
-    // - No timestamps
-    // - No module info
-    //
-    #[cfg(not(debug_assertions))]
-    env_logger::builder().
-        default_format_module_path(false).
-        default_format_timestamp(false).
-        filter_level(log::LevelFilter::Warn).
-        init();
-
-    // Debug logging:
-    // - All logs
-    // - Full info
-    //
-    #[cfg(debug_assertions)]
-    env_logger::builder().
-        filter_level(log::LevelFilter::Debug).
-        init();
+fn init_logging(options: &Options) {
+    if options.debug {
+        // - All logs
+        // - Full info
+        env_logger::builder().
+            filter_level(log::LevelFilter::Debug).
+            init();
+    } else {
+        // - Only warnings and errors
+        // - No timestamps
+        // - No module info
+        env_logger::builder().
+            default_format_module_path(false).
+            default_format_timestamp(false).
+            filter_level(log::LevelFilter::Warn).
+            init();
+    }
 }
