@@ -28,4 +28,4 @@ Running the app is as simple as:
 quickmd <markdown-file>
 ```
 
-Currently, no other flags and settings are available. Pressing escape will close the window.
+Run it with `--help` to get more information on the available options. Pressing escape will close the window.
