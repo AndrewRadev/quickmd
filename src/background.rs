@@ -1,6 +1,7 @@
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+use std::marker::Send;
 
 use dirs::home_dir;
 use log::{debug, error, warn};
@@ -9,7 +10,25 @@ use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
 use crate::ui;
 use crate::markdown;
 
-pub fn init_update_loop(renderer: markdown::Renderer, gui_sender: glib::Sender<ui::Event>) {
+pub trait Sender<T> {
+    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>>;
+}
+
+impl<T> Sender<T> for glib::Sender<T> {
+    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>> {
+        glib::Sender::<T>::send(self, event)
+    }
+}
+
+impl<T> Sender<T> for mpsc::Sender<T> {
+    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>> {
+        mpsc::Sender::<T>::send(self, event)
+    }
+}
+
+pub fn init_update_loop<S>(renderer: markdown::Renderer, mut gui_sender: S)
+    where S: Sender<ui::Event> + Send + 'static
+{
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
 
