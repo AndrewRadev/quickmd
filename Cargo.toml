@@ -3,18 +3,26 @@ name = "quickmd"
 version = "0.1.0"
 authors = ["Andrew Radev <andrew.radev@protonmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Quickly preview a markdown file"
+readme = "README.md"
+keywords = ["markdown", "gtk"]
+exclude = ["tests/**", "_project.vim"]
+
+[badges]
+maintenance = { status = "passively-maintained" }
 
 [dependencies]
 anyhow         = "1.0.26"
 dirs           = "2.0.2"
 env_logger     = "0.7.1"
-gdk            = "0.10.0"
-gio            = "0.6.0"
-glib           = "0.7.1"
+gdk            = "0.10"
+gio            = "0.6"
+glib           = "0.7"
 gtk            = { version = "0.6.0", features = ["v3_16"] }
 log            = "0.4"
 notify         = "4.0.15"
 pulldown-cmark = "0.7.0"
 structopt      = { version = "0.3.11", default-features = false }
 tempfile       = "3.1.0"
-webkit2gtk     = "0.7.0"
+webkit2gtk     = "0.7"
