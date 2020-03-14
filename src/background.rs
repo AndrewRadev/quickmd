@@ -1,3 +1,8 @@
+//! Background monitoring for file-changes.
+//!
+//! Whenever a file changes, we want to regenerate the HTML and send it to the UI for rendering to
+//! the user. This is done with the `init_update_loop` function.
+
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -10,24 +15,44 @@ use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
 use crate::ui;
 use crate::markdown;
 
-pub trait Sender<T> {
-    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>>;
+/// A common trait for `glib::Sender` and `std::mpsc::Sender`.
+///
+/// Both of them have the exact same `send` method, down to the error type they use. Still, we need
+/// a shared trait to use in the `init_update_loop` function.
+///
+/// In practice, we only use `glib::Sender` in "real code", but `std::mpsc::Sender` allows easier
+/// testing, so that's why this trait exists.
+///
+pub trait Sender {
+    /// Send a `ui::Event` to the receiver at the other end
+    fn send(&mut self, event: ui::Event) -> Result<(), mpsc::SendError<ui::Event>>;
 }
 
-impl<T> Sender<T> for glib::Sender<T> {
-    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>> {
-        glib::Sender::<T>::send(self, event)
+impl Sender for glib::Sender<ui::Event> {
+    fn send(&mut self, event: ui::Event) -> Result<(), mpsc::SendError<ui::Event>> {
+        glib::Sender::<ui::Event>::send(self, event)
     }
 }
 
-impl<T> Sender<T> for mpsc::Sender<T> {
-    fn send(&mut self, event: T) -> Result<(), mpsc::SendError<T>> {
-        mpsc::Sender::<T>::send(self, event)
+impl Sender for mpsc::Sender<ui::Event> {
+    fn send(&mut self, event: ui::Event) -> Result<(), mpsc::SendError<ui::Event>> {
+        mpsc::Sender::<ui::Event>::send(self, event)
     }
 }
 
-pub fn init_update_loop<S>(renderer: markdown::Renderer, mut gui_sender: S)
-    where S: Sender<ui::Event> + Send + 'static
+/// The main background worker. Spawns a thread and uses the `notify` crate to listen for file changes.
+///
+/// Input:
+///
+/// - `renderer`:  The struct that takes care of rendering the markdown file into HTML. Used to get
+///                the filename to monitor and to generate the HTML on update.
+/// - `ui_sender`: The channel to send `ui::Event` records to when a change is detected.
+///
+/// A change to the main markdown file triggers a rerender and webview refresh. A change to the
+/// user-level configuration files is only going to trigger a refresh.
+///
+pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
+    where S: Sender + Send + 'static
 {
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
@@ -66,7 +91,7 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut gui_sender: S)
                     if file == renderer.canonical_md_path {
                         match renderer.run() {
                             Ok(html) => {
-                                let _ = gui_sender.send(ui::Event::LoadHtml(html));
+                                let _ = ui_sender.send(ui::Event::LoadHtml(html));
                             },
                             Err(e) => {
                                 error! {
@@ -76,7 +101,7 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut gui_sender: S)
                             }
                         }
                     } else {
-                        let _ = gui_sender.send(ui::Event::Reload);
+                        let _ = ui_sender.send(ui::Event::Reload);
                     }
                 },
                 Ok(event) => debug!("Ignored watcher event: {:?}", event),

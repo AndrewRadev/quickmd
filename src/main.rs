@@ -41,15 +41,11 @@ fn run(options: &Options) -> anyhow::Result<()> {
     }
     let renderer = Renderer::new(md_path);
 
-    let ui = ui::App::init()?;
+    let ui = ui::App::init(renderer.display_md_path.to_str())?;
+    let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
 
-    ui.set_filename(&renderer.display_md_path);
-    ui.connect_events();
-
-    let (gui_sender, gui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
-
-    ui::init_render_loop(ui.clone(), gui_receiver);
-    background::init_update_loop(renderer, gui_sender);
+    ui.init_render_loop(ui_receiver);
+    background::init_update_loop(renderer, ui_sender);
 
     ui.run();
     Ok(())

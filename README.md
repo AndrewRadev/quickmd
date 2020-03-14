@@ -29,3 +29,12 @@ quickmd <markdown-file>
 ```
 
 Run it with `--help` to get more information on the available options. Pressing escape will close the window.
+
+## Configuration
+
+You can change the CSS of the preview HTML by writing CSS in one of these files:
+
+- `~/.quickmd.css`
+- `~/.config/quickmd.css`
+
+The built-in CSS that is used is stored in [/res/style](./res/style).
