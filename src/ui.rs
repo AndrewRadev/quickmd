@@ -40,7 +40,7 @@ impl App {
         window.set_default_size(1024, 768);
 
         let header_bar = HeaderBar::new();
-        header_bar.set_title("Quickmd");
+        header_bar.set_title(Some("Quickmd"));
         header_bar.set_show_close_button(true);
         header_bar.set_title(title);
 
@@ -48,7 +48,7 @@ impl App {
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
-        window.set_titlebar(&header_bar);
+        window.set_titlebar(Some(&header_bar));
         window.add(&webview);
 
         let assets = Assets::init()?;
