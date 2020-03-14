@@ -63,8 +63,8 @@ fn init_logging(options: &Options) {
         // - No timestamps
         // - No module info
         env_logger::builder().
-            default_format_module_path(false).
-            default_format_timestamp(false).
+            format_module_path(false).
+            format_timestamp(None).
             filter_level(log::LevelFilter::Warn).
             init();
     }
