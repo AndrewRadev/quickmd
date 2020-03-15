@@ -18,6 +18,10 @@ struct Options {
     /// Markdown file to render
     #[structopt(name = "input-file.md", parse(from_os_str))]
     input: PathBuf,
+
+    /// Don't watch file for changes
+    #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
+    watch: bool,
 }
 
 fn main() {
@@ -43,9 +47,14 @@ fn run(options: &Options) -> anyhow::Result<()> {
 
     let ui = ui::App::init(renderer.display_md_path.to_str())?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
-
     ui.init_render_loop(ui_receiver);
-    background::init_update_loop(renderer, ui_sender);
+
+    // Initial render
+    ui_sender.send(ui::Event::LoadHtml(renderer.run()?))?;
+
+    if options.watch {
+        background::init_update_loop(renderer, ui_sender);
+    }
 
     ui.run();
     Ok(())

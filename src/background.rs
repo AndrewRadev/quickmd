@@ -57,11 +57,6 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
     thread::spawn(move || {
         let (watcher_sender, watcher_receiver) = mpsc::channel();
 
-        // Initial render
-        if let Err(e) = watcher_sender.send(DebouncedEvent::Write(renderer.canonical_md_path.clone())) {
-            error!("Couldn't render markdown: {}", e);
-        }
-
         let mut watcher = match watcher(watcher_sender, Duration::from_millis(200)) {
             Ok(w) => w,
             Err(e) => {
