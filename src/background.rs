@@ -64,7 +64,12 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
                 return;
             }
         };
-        if let Err(e) = watcher.watch(&renderer.canonical_md_path, RecursiveMode::NonRecursive) {
+
+        let watch_path = renderer.canonical_md_path.parent().
+            unwrap_or_else(|| &renderer.canonical_md_path).
+            to_owned();
+
+        if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
             warn!("Couldn't initialize watcher: {}", e);
             return;
         }

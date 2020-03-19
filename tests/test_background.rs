@@ -1,55 +1,57 @@
-use std::env;
 use std::fs;
-use std::path::PathBuf;
 use std::sync::mpsc;
+use std::sync::mpsc::RecvTimeoutError::Timeout as TimeoutError;
+use std::time::Duration;
 
-use tempfile::TempDir;
+use claim::assert_matches;
 
 use quickmd::ui;
 use quickmd::markdown::Renderer;
 use quickmd::background::init_update_loop;
 
-struct WorkingDir {
-    original_dir: PathBuf,
-    _tempdir: TempDir,
-}
-
-impl WorkingDir {
-    fn temp() -> Self {
-        let current_dir = env::current_dir().unwrap();
-        let tempdir = TempDir::new().unwrap();
-        env::set_current_dir(tempdir.path()).unwrap();
-
-        WorkingDir { original_dir: current_dir, _tempdir: tempdir }
-    }
-}
-
-impl Drop for WorkingDir {
-    fn drop(&mut self) {
-        env::set_current_dir(&self.original_dir).unwrap();
-    }
-}
+// TODO test for refreshing the page on ~/.quickmd.css change
 
 #[test]
 fn test_update_loop_detects_file_updates() {
-    let _working_dir = WorkingDir::temp();
+    let tempdir = tempfile::tempdir().unwrap();
+    let path = tempdir.path().join("file.md");
 
-    fs::write("file.md", "# Test").unwrap();
-    let path = PathBuf::from("file.md");
-    let renderer = Renderer::new(path);
+    fs::write(&path, "# Test").unwrap();
+    let renderer = Renderer::new(path.clone());
 
     let (sender, receiver) = mpsc::channel();
     init_update_loop(renderer, sender);
+    // Wait for the watcher thread to get ready
+    std::thread::sleep(Duration::from_millis(10));
 
-    // Initial render
-    let message = receiver.recv().unwrap();
-    assert!(matches!(message, ui::Event::LoadHtml(_)));
+    fs::write(path, "# Changed").unwrap();
 
-    fs::write("file.md", "# Changed").unwrap();
+    let message = receiver.recv_timeout(Duration::from_millis(300));
+    assert_matches!(message, Ok(ui::Event::LoadHtml(_)));
 
-    // Updated render
-    let message = receiver.recv().unwrap();
-    assert!(matches!(message, ui::Event::LoadHtml(_)));
+    let message = receiver.recv_timeout(Duration::from_millis(300));
+    assert_matches!(message, Err(TimeoutError));
+}
 
-    // TODO Handle no-render case with a timeout.
+#[test]
+fn test_update_loop_detects_file_creation() {
+    let tempdir = tempfile::tempdir().unwrap();
+    let path = tempdir.path().join("file.md");
+
+    fs::write(&path, "# Test").unwrap();
+    let renderer = Renderer::new(path.clone());
+
+    let (sender, receiver) = mpsc::channel();
+    init_update_loop(renderer, sender);
+    // Wait for the watcher thread to get ready
+    std::thread::sleep(Duration::from_millis(10));
+
+    fs::remove_file(&path).unwrap();
+    fs::write(&path, "# Changed").unwrap();
+
+    let message = receiver.recv_timeout(Duration::from_millis(300));
+    assert_matches!(message, Ok(ui::Event::LoadHtml(_)));
+
+    let message = receiver.recv_timeout(Duration::from_millis(300));
+    assert_matches!(message, Err(TimeoutError));
 }

@@ -11,6 +11,7 @@ use crate::assets::Assets;
 
 /// Events that trigger UI changes.
 ///
+#[derive(Debug)]
 pub enum Event {
     /// Load the given HTML string into the webview.
     LoadHtml(String),
