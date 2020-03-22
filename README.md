@@ -28,7 +28,21 @@ Running the app is as simple as:
 quickmd <markdown-file>
 ```
 
-Run it with `--help` to get more information on the available options. Pressing escape will close the window.
+Pressing escape will close the window. Running it with `--help` should provide more info on the available options:
+
+```
+USAGE:
+    quickmd [FLAGS] <input-file.md>
+
+FLAGS:
+    -d, --debug       Activate debug logging
+    -h, --help        Prints help information
+    -V, --version     Prints version information
+        --no-watch    Disables watching file for changes
+
+ARGS:
+    <input-file.md>    Markdown file to render
+```
 
 ## Configuration
 

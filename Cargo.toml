@@ -1,13 +1,14 @@
 [package]
-name = "quickmd"
-version = "0.1.0"
-authors = ["Andrew Radev <andrew.radev@protonmail.com>"]
-edition = "2018"
-license = "MIT OR Apache-2.0"
+name        = "quickmd"
+version     = "0.1.0"
+authors     = ["Andrew Radev <andrew.radev@protonmail.com>"]
+edition     = "2018"
+license     = "MIT OR Apache-2.0"
 description = "Quickly preview a markdown file"
-readme = "README.md"
-keywords = ["markdown", "gtk"]
-exclude = ["tests/**", "_project.vim"]
+readme      = "README.md"
+keywords    = ["markdown", "gtk"]
+exclude     = ["tests/**", "_project.vim"]
+repository  = "https://github.com/AndrewRadev/quickmd"
 
 [badges]
 maintenance = { status = "passively-maintained" }

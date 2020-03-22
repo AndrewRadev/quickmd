@@ -11,7 +11,7 @@ use quickmd::background;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "quickmd", about = "A simple markdown previewer.")]
 struct Options {
-    /// Activate debug logging
+    /// Activates debug logging
     #[structopt(short, long)]
     debug: bool,
 
@@ -19,7 +19,7 @@ struct Options {
     #[structopt(name = "input-file.md", parse(from_os_str))]
     input: PathBuf,
 
-    /// Don't watch file for changes
+    /// Disables watching file for changes
     #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
     watch: bool,
 }
