@@ -1,0 +1,1 @@
+runtime! projects/rust.vim
