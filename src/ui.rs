@@ -107,12 +107,9 @@ impl App {
 
         // Each key press will invoke this function.
         self.window.connect_key_press_event(move |_window, gdk| {
-            match gdk.get_keyval() {
-                key::Escape => {
-                    self_clone.borrow_mut().take().unwrap().assets.delete();
-                    gtk::main_quit()
-                },
-                _ => (),
+            if let key::Escape = gdk.get_keyval() {
+                self_clone.borrow_mut().take().unwrap().assets.delete();
+                gtk::main_quit()
             }
             Inhibit(false)
         });

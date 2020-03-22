@@ -17,9 +17,9 @@ use dirs::home_dir;
 use tempfile::{tempdir, TempDir};
 use log::{debug, warn};
 
-const MAIN_JS:    &'static str = include_str!("../res/js/main.js");
-const MAIN_CSS:   &'static str = include_str!("../res/style/main.css");
-const GITHUB_CSS: &'static str = include_str!("../res/style/github.css");
+const MAIN_JS:    &str = include_str!("../res/js/main.js");
+const MAIN_CSS:   &str = include_str!("../res/style/main.css");
+const GITHUB_CSS: &str = include_str!("../res/style/github.css");
 
 /// A container for static assets.
 ///
@@ -65,7 +65,7 @@ impl Assets {
 
         let home_path = home_dir().
             map(|p| p.display().to_string()).
-            unwrap_or(String::new());
+            unwrap_or_else(String::new);
 
         debug!("Building HTML:");
         debug!(" > home_path  = {}", home_path);

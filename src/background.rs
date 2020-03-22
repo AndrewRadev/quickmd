@@ -75,10 +75,10 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
         }
 
         if let Some(home) = home_dir() {
-            if let Ok(_) = watcher.watch(home.join(".quickmd.css"), RecursiveMode::NonRecursive) {
+            if watcher.watch(home.join(".quickmd.css"), RecursiveMode::NonRecursive).is_ok() {
                 debug!("Watching ~/.quickmd.css");
             }
-            if let Ok(_) = watcher.watch(home.join(".config/quickmd.css"), RecursiveMode::NonRecursive) {
+            if watcher.watch(home.join(".config/quickmd.css"), RecursiveMode::NonRecursive).is_ok() {
                 debug!("Watching ~/.config/quickmd.css");
             }
         }
