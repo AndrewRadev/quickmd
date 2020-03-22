@@ -1,3 +1,6 @@
+[![Crate](https://img.shields.io/crates/v/quickmd)](https://crates.io/crates/quickmd)
+[![Maintenance status](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)](https://crates.io/crates/quickmd)
+
 # QuickMD
 
 This project is a simple tool that solves a simple problem: I'd like to preview markdown files as they'll show up on Github, so I don't have to push my READMEs before I can tell whether they're formatted well enough. It ends up looking like this:
@@ -10,15 +13,17 @@ _Note: I have no idea if I'm allowed to use Github's stylesheet. The relevant fi
 
 ## Installation
 
-You'll need the GTK+, GLib and webkit2gtk development files to be installed on your system. The Gtk-rs [requirements page](http://gtk-rs.org/docs/requirements.html) should be a good guide.
+You'll need to have Rust and the `cargo` tool. The easiest way to get that done is through [rustup.rs](https://rustup.rs/).
 
-After that, you can build and install the app using:
+You'll also need the GTK+, GLib and webkit2gtk development files to be installed on your system. The Gtk-rs [requirements page](http://gtk-rs.org/docs/requirements.html) should be a good guide.
+
+After that, you can build and install the app from `crates.io` using:
 
 ```
-cargo install --path .
+cargo install quickmd
 ```
 
-Currently, the project is not uploaded to crates.io, since I still think it needs some work, but it *is* functional and I use it daily.
+Make sure that `~/.cargo/bin` is in your `PATH` so you can call the `quickmd` executable.
 
 ## Usage
 
