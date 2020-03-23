@@ -65,21 +65,29 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
             }
         };
 
-        let watch_path = renderer.canonical_md_path.parent().
+        // Watch the parent directory so we can catch recreated files
+        let main_watch_path = renderer.canonical_md_path.parent().
             unwrap_or_else(|| &renderer.canonical_md_path).
             to_owned();
 
-        if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
+        if let Err(e) = watcher.watch(&main_watch_path, RecursiveMode::NonRecursive) {
             warn!("Couldn't initialize watcher: {}", e);
             return;
         }
 
+        let mut extra_watch_paths = vec![];
+
         if let Some(home) = home_dir() {
-            if watcher.watch(home.join(".quickmd.css"), RecursiveMode::NonRecursive).is_ok() {
-                debug!("Watching ~/.quickmd.css");
+            let config_path = home.join(".quickmd.css");
+            if watcher.watch(&config_path, RecursiveMode::NonRecursive).is_ok() {
+                debug!("Watching {}", config_path.display());
+                extra_watch_paths.push(config_path);
             }
-            if watcher.watch(home.join(".config/quickmd.css"), RecursiveMode::NonRecursive).is_ok() {
-                debug!("Watching ~/.config/quickmd.css");
+
+            let config_path = home.join(".config/quickmd.css");
+            if watcher.watch(&config_path, RecursiveMode::NonRecursive).is_ok() {
+                debug!("Watching {}", config_path.display());
+                extra_watch_paths.push(config_path);
             }
         }
 
@@ -100,8 +108,10 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
                                 };
                             }
                         }
-                    } else {
+                    } else if extra_watch_paths.contains(&file) {
                         let _ = ui_sender.send(ui::Event::Reload);
+                    } else {
+                        debug!("Ignored file update event: {:?}", file)
                     }
                 },
                 Ok(event) => debug!("Ignored watcher event: {:?}", event),
