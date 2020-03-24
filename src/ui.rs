@@ -3,7 +3,7 @@
 use anyhow::anyhow;
 use gdk::enums::key;
 use gtk::prelude::*;
-use gtk::{Window, WindowType, HeaderBar};
+use gtk::{Window, WindowType};
 use log::{debug, warn};
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
@@ -25,7 +25,6 @@ pub enum Event {
 #[derive(Clone)]
 pub struct App {
     window: Window,
-    header_bar: HeaderBar,
     webview: WebView,
     assets: Assets,
 }
@@ -39,22 +38,20 @@ impl App {
     pub fn init(title: Option<&str>) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
-
-        let header_bar = HeaderBar::new();
-        header_bar.set_title(Some("Quickmd"));
-        header_bar.set_show_close_button(true);
-        header_bar.set_title(title);
+        match title {
+            Some(filename) => window.set_title(filename),
+            None =>  window.set_title("Quickmd")
+        }
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
 
-        window.set_titlebar(Some(&header_bar));
         window.add(&webview);
 
         let assets = Assets::init()?;
 
-        Ok(App { window, header_bar, webview, assets })
+        Ok(App { window, webview, assets })
     }
 
     /// Start listening to events from the `ui_receiver` and trigger the relevant methods on the
