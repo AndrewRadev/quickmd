@@ -38,7 +38,10 @@ impl App {
     pub fn init(title: Option<&str>) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
-        window.set_title(title.unwrap_or("Quickmd"));
+
+        let title = &title.map(|t| format!("{} - Quickmd", t)).
+            unwrap_or_else(|| String::from("Quickmd"));
+        window.set_title(title);
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
