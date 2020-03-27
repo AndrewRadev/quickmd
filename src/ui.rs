@@ -19,7 +19,7 @@ pub enum Event {
     Reload,
 }
 
-/// The container for all the GTK widgets of the app -- window, header bar, etc.
+/// The container for all the GTK widgets of the app -- window, webview, etc.
 /// Reference-counted, so should be cheap to clone.
 ///
 #[derive(Clone)]
@@ -32,8 +32,8 @@ pub struct App {
 impl App {
     /// Construct a new app.
     ///
-    /// The optional `title` parameter is a string shown in the header bar. Initialization could
-    /// fail due to `WebContext` or `Assets` failures.
+    /// The optional `title` parameter is used as the window title. Initialization could fail due
+    /// to `WebContext` or `Assets` failures.
     ///
     pub fn init(title: Option<&str>) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
