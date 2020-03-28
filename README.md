@@ -1,5 +1,5 @@
 [![Crate](https://img.shields.io/crates/v/quickmd)](https://crates.io/crates/quickmd)
-[![Maintenance status](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)](https://crates.io/crates/quickmd)
+[![Maintenance status](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)](https://crates.io/crates/quickmd)
 
 # QuickMD
 

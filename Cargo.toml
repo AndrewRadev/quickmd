@@ -11,7 +11,7 @@ exclude     = ["tests/**", "_project.vim"]
 repository  = "https://github.com/AndrewRadev/quickmd"
 
 [badges]
-maintenance = { status = "passively-maintained" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 anyhow         = "1.0.26"
