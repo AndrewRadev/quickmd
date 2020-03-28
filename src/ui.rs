@@ -35,22 +35,15 @@ pub struct App {
 impl App {
     /// Construct a new app.
     ///
-    /// The optional `filename` parameter is used as the window title and for other actions on the
-    /// file.
-    ///
+    /// The `filename` parameter is used as the window title and for other actions on the file.
     /// Initialization could fail due to `WebContext` or `Assets` failures.
     ///
-    pub fn init(filename: Option<PathBuf>) -> anyhow::Result<Self> {
+    pub fn init(filename: PathBuf) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
-        match filename {
-            Some(path) => {
-                let title = format!("{} - Quickmd", path.short_path().display());
-                window.set_title(&title);
-            },
-            None => window.set_title("Quickmd"),
-        }
+        let title = format!("{} - Quickmd", filename.short_path().display());
+        window.set_title(&title);
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;

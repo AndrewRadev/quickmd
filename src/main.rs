@@ -45,7 +45,7 @@ fn run(options: &Options) -> anyhow::Result<()> {
     }
     let renderer = Renderer::new(md_path.clone());
 
-    let ui = ui::App::init(Some(md_path))?;
+    let ui = ui::App::init(md_path)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 
