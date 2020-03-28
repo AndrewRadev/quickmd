@@ -10,8 +10,8 @@ use pulldown_cmark::{Parser, html};
 /// Encapsulates a markdown file and provides an interface to turn its contents into HTML.
 ///
 pub struct Renderer {
-    /// A short, user-friendly path to show in UI.
-    pub display_md_path: PathBuf,
+    /// The original path given to the renderer.
+    pub md_path: PathBuf,
 
     /// The canonicalized path to use in file operations.
     pub canonical_md_path: PathBuf,
@@ -23,9 +23,8 @@ impl Renderer {
     pub fn new(md_path: PathBuf) -> Self {
         let canonical_md_path = md_path.canonicalize().
             unwrap_or_else(|_| md_path.clone());
-        let display_md_path = md_path;
 
-        Renderer { display_md_path, canonical_md_path }
+        Renderer { md_path, canonical_md_path }
     }
 
     /// Turn the current contents of the markdown file into HTML.

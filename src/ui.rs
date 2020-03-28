@@ -1,10 +1,13 @@
 //! The GTK user interface.
 
+use std::path::PathBuf;
+
 use anyhow::anyhow;
 use gdk::enums::key;
 use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use log::{debug, warn};
+use pathbuftools::PathBufTools;
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
 use crate::assets::Assets;
@@ -32,16 +35,22 @@ pub struct App {
 impl App {
     /// Construct a new app.
     ///
-    /// The optional `title` parameter is used as the window title. Initialization could fail due
-    /// to `WebContext` or `Assets` failures.
+    /// The optional `filename` parameter is used as the window title and for other actions on the
+    /// file.
     ///
-    pub fn init(title: Option<&str>) -> anyhow::Result<Self> {
+    /// Initialization could fail due to `WebContext` or `Assets` failures.
+    ///
+    pub fn init(filename: Option<PathBuf>) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
-        let title = &title.map(|t| format!("{} - Quickmd", t)).
-            unwrap_or_else(|| String::from("Quickmd"));
-        window.set_title(title);
+        match filename {
+            Some(path) => {
+                let title = format!("{} - Quickmd", path.short_path().display());
+                window.set_title(&title);
+            },
+            None => window.set_title("Quickmd"),
+        }
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
