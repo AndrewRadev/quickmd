@@ -1,5 +1,8 @@
 //! The GTK user interface.
 
+use std::path::PathBuf;
+use std::ffi::OsStr;
+
 use anyhow::anyhow;
 use gdk::keys;
 use gtk::prelude::*;
@@ -13,13 +16,14 @@ use crate::input::{InputFile, Config};
 use crate::markdown::RenderedContent;
 
 /// The container for all the GTK widgets of the app -- window, webview, etc.
-/// Reference-counted, so should be cheap to clone.
+/// All of these are reference-counted, so should be cheap to clone.
 ///
 #[derive(Clone)]
 pub struct App {
     window: Window,
     webview: WebView,
     assets: Assets,
+    filename: PathBuf,
 }
 
 impl App {
@@ -34,7 +38,7 @@ impl App {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
-        let title = match input_file {
+        let title = match &input_file {
             InputFile::Filesystem(p) => format!("{} - Quickmd", p.short_path().display()),
             InputFile::Stdin(_)      => String::from("Quickmd"),
         };
@@ -47,7 +51,7 @@ impl App {
 
         window.add(&webview);
 
-        Ok(App { window, webview, assets })
+        Ok(App { window, webview, assets, filename: input_file.path().to_path_buf() })
     }
 
     /// Start listening to events from the `ui_receiver` and trigger the relevant methods on the
@@ -103,10 +107,24 @@ impl App {
     }
 
     fn connect_events(&self) {
+        let filename = self.filename.clone();
+
         // Each key press will invoke this function.
         self.window.connect_key_press_event(move |_window, event| {
-            if let keys::constants::Escape = event.get_keyval() {
-                gtk::main_quit();
+            let keyval   = event.get_keyval();
+            let keystate = event.get_state();
+
+            match (keystate, keyval) {
+                // Escape:
+                (_, keys::constants::Escape) =>  {
+                    gtk::main_quit()
+                },
+                // Ctrl + e:
+                (gdk::ModifierType::CONTROL_MASK, keys::constants::e) => {
+                    debug!("Got CTRL+E, exec-ing into an editor");
+                    exec_editor(filename.as_os_str());
+                },
+                _ => (),
             }
             Inhibit(false)
         });
@@ -151,4 +169,21 @@ pub enum Event {
 
     /// Refresh the webview.
     Reload,
+}
+
+#[cfg(target_family="unix")]
+fn exec_editor(filename_string: &OsStr) {
+    gtk::main_quit();
+
+    use std::process::Command;
+    use std::os::unix::process::CommandExt;
+
+    Command::new("gvim").
+        args(&[filename_string]).
+        exec();
+}
+
+#[cfg(not(target_family="unix"))]
+fn exec_editor(_filename_string: &OsStr) {
+    warn!("Not on a UNIX system, can't exec to a text editor");
 }
