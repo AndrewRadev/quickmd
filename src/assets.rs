@@ -7,19 +7,34 @@
 //! For the other assets, it means the HTML can refer to local files instead of embedding the
 //! contents as `<script>` and `<style>` tags, making the output easier to read and debug.
 
-use std::io;
+use std::collections::HashMap;
 use std::fs;
+use std::io;
 use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
 use dirs::home_dir;
-use tempfile::{tempdir, TempDir};
 use log::{debug, warn};
+use serde::{Serialize, Deserialize};
+use tempfile::{tempdir, TempDir};
 
 const MAIN_JS:    &str = include_str!("../res/js/main.js");
 const MAIN_CSS:   &str = include_str!("../res/style/main.css");
 const GITHUB_CSS: &str = include_str!("../res/style/github.css");
+
+/// The client-side state of the page as the user's interacted with it. Currently, includes the
+/// scroll position and the heights of images on the page (Note: not yet implemented), so that
+/// reloading doesn't change the viewport.
+///
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct PageState {
+    /// Scroll position of the page.
+    pub scroll_top: f64,
+
+    /// A dictionary of all the heights of images in the page, keyed by src URL.
+    pub image_heights: HashMap<String, f64>,
+}
 
 /// A container for static assets.
 ///
@@ -59,7 +74,7 @@ impl Assets {
     ///
     /// Returns the path to the generated HTML file, or an error.
     ///
-    pub fn build(&self, html: &str, scroll_top: f64) -> anyhow::Result<PathBuf> {
+    pub fn build(&self, html: &str, page_state: &PageState) -> anyhow::Result<PathBuf> {
         let temp_dir = self.temp_dir.clone().
             ok_or_else(|| anyhow!("TempDir deleted, there might be a synchronization error"))?;
 
@@ -67,15 +82,21 @@ impl Assets {
             map(|p| p.display().to_string()).
             unwrap_or_else(String::new);
 
+        let json_state = serde_json::to_string(page_state).
+            unwrap_or_else(|e| {
+                warn!("Couldn't build JSON state from {:?}: {:?}", page_state, e);
+                String::from("{}")
+            });
+
         debug!("Building HTML:");
         debug!(" > home_path  = {}", home_path);
-        debug!(" > scroll_top = {}", scroll_top);
+        debug!(" > page_state = {:?}", json_state);
 
         let page = format! {
             include_str!("../res/layout.html"),
             home_path=home_path,
             body=html,
-            scroll_top=scroll_top,
+            page_state=json_state,
         };
 
         let output_path = temp_dir.path().join("output.html");

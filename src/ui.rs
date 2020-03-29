@@ -10,7 +10,7 @@ use log::{debug, warn};
 use pathbuftools::PathBufTools;
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
-use crate::assets::Assets;
+use crate::assets::{Assets, PageState};
 
 /// Events that trigger UI changes.
 ///
@@ -83,11 +83,16 @@ impl App {
     }
 
     fn load_html(&mut self, html: &str) -> anyhow::Result<()> {
-        let scroll_top = self.webview.get_title().
-            and_then(|t| t.parse::<f64>().ok()).
-            unwrap_or(0.0);
-
-        let output_path = self.assets.build(html, scroll_top)?;
+        let page_state = match self.webview.get_title() {
+            Some(t) => {
+                serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
+                    warn!("Failed to get page state from {}: {:?}", t, e);
+                    PageState::default()
+                })
+            },
+            None => PageState::default(),
+        };
+        let output_path = self.assets.build(html, &page_state)?;
 
         debug!("Loading HTML:");
         debug!(" > output_path = {}", output_path.display());
