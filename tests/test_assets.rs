@@ -55,6 +55,6 @@ fn test_building_a_file_with_assets_includes_scroll_position_as_the_title() {
     // alternative.
     assert_contains!(
         fs::read_to_string(&path).unwrap(),
-        r#"<title>{"scroll_top":100.5,"image_heights":{}}</title>"#
+        r#"<title>{"scroll_top":100.5,"image_widths":{},"image_heights":{}}</title>"#
     );
 }

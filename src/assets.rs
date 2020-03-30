@@ -32,7 +32,10 @@ pub struct PageState {
     /// Scroll position of the page.
     pub scroll_top: f64,
 
-    /// A dictionary of all the heights of images in the page, keyed by src URL.
+    /// A cache of all the widths of images in the page, keyed by src URL.
+    pub image_widths: HashMap<String, f64>,
+
+    /// A cache of all the heights of images in the page, keyed by src URL.
     pub image_heights: HashMap<String, f64>,
 }
 
