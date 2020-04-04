@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::io;
 use std::process;
 
 use anyhow::anyhow;
@@ -7,27 +7,11 @@ use structopt::StructOpt;
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 use quickmd::background;
-
-#[derive(Debug, StructOpt)]
-#[structopt(name = "quickmd", about = "A simple markdown previewer.")]
-struct Options {
-    /// Activates debug logging
-    #[structopt(short, long)]
-    debug: bool,
-
-    /// Markdown file to render
-    #[structopt(name = "input-file.md", parse(from_os_str))]
-    input: PathBuf,
-
-    /// Disables watching file for changes
-    #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
-    watch: bool,
-}
+use quickmd::input;
 
 fn main() {
-    let options = Options::from_args();
-
-    init_logging(&options);
+    let options = input::Options::from_args();
+    options.init_logging();
 
     if let Err(e) = run(&options) {
         eprintln!("{}", e);
@@ -35,46 +19,30 @@ fn main() {
     }
 }
 
-fn run(options: &Options) -> anyhow::Result<()> {
+fn run(options: &input::Options) -> anyhow::Result<()> {
     gtk::init()?;
 
-    let md_path = options.input.clone();
+    let input_file   = options.get_input_file(io::stdin())?;
+    let is_real_file = input_file.is_real_file();
+    let md_path      = input_file.path();
+
     if !md_path.exists() {
         let error = anyhow!("File not found: {}", md_path.display());
         return Err(error);
     }
-    let renderer = Renderer::new(md_path.clone());
+    let renderer = Renderer::new(md_path.to_path_buf());
 
-    let ui = ui::App::init(md_path)?;
+    let mut ui = ui::App::init(input_file.clone())?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 
     // Initial render
     ui_sender.send(ui::Event::LoadHtml(renderer.run()?))?;
 
-    if options.watch {
+    if is_real_file && options.watch {
         background::init_update_loop(renderer, ui_sender);
     }
 
     ui.run();
     Ok(())
-}
-
-fn init_logging(options: &Options) {
-    if options.debug {
-        // - All logs
-        // - Full info
-        env_logger::builder().
-            filter_level(log::LevelFilter::Debug).
-            init();
-    } else {
-        // - Only warnings and errors
-        // - No timestamps
-        // - No module info
-        env_logger::builder().
-            format_module_path(false).
-            format_timestamp(None).
-            filter_level(log::LevelFilter::Warn).
-            init();
-    }
 }

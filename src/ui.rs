@@ -1,7 +1,5 @@
 //! The GTK user interface.
 
-use std::path::PathBuf;
-
 use anyhow::anyhow;
 use gdk::enums::key;
 use gtk::prelude::*;
@@ -11,6 +9,7 @@ use pathbuftools::PathBufTools;
 use webkit2gtk::{WebContext, WebView, WebViewExt};
 
 use crate::assets::{Assets, PageState};
+use crate::input::InputFile;
 
 /// Events that trigger UI changes.
 ///
@@ -35,20 +34,22 @@ pub struct App {
 impl App {
     /// Construct a new app.
     ///
-    /// The `filename` parameter is used as the window title and for other actions on the file.
+    /// The `input_file` parameter is used as the window title and for other actions on the file.
     /// Initialization could fail due to `WebContext` or `Assets` failures.
     ///
-    pub fn init(filename: PathBuf) -> anyhow::Result<Self> {
+    pub fn init(input_file: InputFile) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
-        let title = format!("{} - Quickmd", filename.short_path().display());
+        let title = match input_file {
+            InputFile::Filesystem(p) => format!("{} - Quickmd", p.short_path().display()),
+            InputFile::Stdin(_)      => format!("Quickmd"),
+        };
         window.set_title(&title);
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
-
         window.add(&webview);
 
         let assets = Assets::init()?;
