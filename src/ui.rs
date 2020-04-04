@@ -77,10 +77,13 @@ impl App {
 
     /// Actually start the UI, blocking the main thread.
     ///
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         self.connect_events();
         self.window.show_all();
+
         gtk::main();
+
+        self.assets.delete();
     }
 
     fn load_html(&mut self, html: &str) -> anyhow::Result<()> {
@@ -107,14 +110,10 @@ impl App {
     }
 
     fn connect_events(&self) {
-        use std::cell::RefCell;
-        let self_clone = RefCell::new(Some(self.clone()));
-
         // Each key press will invoke this function.
         self.window.connect_key_press_event(move |_window, gdk| {
             if let key::Escape = gdk.get_keyval() {
-                self_clone.borrow_mut().take().unwrap().assets.delete();
-                gtk::main_quit()
+                gtk::main_quit();
             }
             Inhibit(false)
         });
