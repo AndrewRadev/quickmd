@@ -7,10 +7,10 @@ use structopt::StructOpt;
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 use quickmd::background;
-use quickmd::input;
+use quickmd::input::{InputFile, Options};
 
 fn main() {
-    let options = input::Options::from_args();
+    let options = Options::from_args();
     options.init_logging();
 
     if let Err(e) = run(&options) {
@@ -19,10 +19,10 @@ fn main() {
     }
 }
 
-fn run(options: &input::Options) -> anyhow::Result<()> {
+fn run(options: &Options) -> anyhow::Result<()> {
     gtk::init()?;
 
-    let input_file   = options.get_input_file(io::stdin())?;
+    let input_file   = InputFile::from(&options.input_file, io::stdin())?;
     let is_real_file = input_file.is_real_file();
     let md_path      = input_file.path();
 

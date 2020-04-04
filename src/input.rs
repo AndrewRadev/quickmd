@@ -22,6 +22,22 @@ pub enum InputFile {
 }
 
 impl InputFile {
+    /// Construct an `InputFile` based on the given path.
+    ///
+    /// If the path is "-", the given `contents` are assumed to be STDIN, they're written down in a
+    /// tempfile and returned. Otherwise, that parameter is ignored.
+    ///
+    pub fn from(path: &Path, mut contents: impl io::Read) -> anyhow::Result<InputFile> {
+        if path == PathBuf::from("-") {
+            let mut tempfile = NamedTempFile::new()?;
+            io::copy(&mut contents, &mut tempfile)?;
+
+            Ok(InputFile::Stdin(Rc::new(tempfile)))
+        } else {
+            Ok(InputFile::Filesystem(path.to_path_buf()))
+        }
+    }
+
     /// Get the path to a real file on the filesystem.
     pub fn path(&self) -> &Path {
         match self {
@@ -49,7 +65,7 @@ pub struct Options {
 
     /// Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
     #[structopt(name = "input-file.md", parse(from_os_str))]
-    pub input: PathBuf,
+    pub input_file: PathBuf,
 
     /// Disables watching file for changes
     #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
@@ -79,22 +95,6 @@ impl Options {
                 format_timestamp(None).
                 filter_level(log::LevelFilter::Warn).
                 init();
-        }
-    }
-
-    /// Get an `InputFile` based on the given command-line options.
-    ///
-    /// If the file's name is "-", the given `contents` are assumed to be STDIN, they're written
-    /// down in a tempfile and returned. Otherwise, that parameter is ignored.
-    ///
-    pub fn get_input_file(&self, mut contents: impl io::Read) -> anyhow::Result<InputFile> {
-        if self.input == PathBuf::from("-") {
-            let mut tempfile = NamedTempFile::new()?;
-            io::copy(&mut contents, &mut tempfile)?;
-
-            Ok(InputFile::Stdin(Rc::new(tempfile)))
-        } else {
-            Ok(InputFile::Filesystem(self.input.clone()))
         }
     }
 }
