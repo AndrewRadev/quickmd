@@ -4,10 +4,11 @@ use std::process;
 use anyhow::anyhow;
 use structopt::StructOpt;
 
-use quickmd::markdown::Renderer;
-use quickmd::ui;
+use quickmd::assets::Assets;
 use quickmd::background;
 use quickmd::input::{InputFile, Options};
+use quickmd::markdown::Renderer;
+use quickmd::ui;
 
 fn main() {
     let options = Options::from_args();
@@ -31,8 +32,9 @@ fn run(options: &Options) -> anyhow::Result<()> {
         return Err(error);
     }
     let renderer = Renderer::new(md_path.to_path_buf());
+    let assets = Assets::init()?;
 
-    let mut ui = ui::App::init(input_file.clone())?;
+    let mut ui = ui::App::init(input_file.clone(), assets)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 

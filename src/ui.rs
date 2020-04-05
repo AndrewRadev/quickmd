@@ -32,12 +32,14 @@ pub struct App {
 }
 
 impl App {
-    /// Construct a new app.
+    /// Construct a new app. Input params:
     ///
-    /// The `input_file` parameter is used as the window title and for other actions on the file.
-    /// Initialization could fail due to `WebContext` or `Assets` failures.
+    /// - input_file: Used as the window title and for other actions on the file.
+    /// - assets:     Encapsulates the HTML layout that will be wrapping the rendered markdown.
     ///
-    pub fn init(input_file: InputFile) -> anyhow::Result<Self> {
+    /// Initialization could fail due to a `WebContext` failure.
+    ///
+    pub fn init(input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -51,8 +53,6 @@ impl App {
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::new_with_context(&web_context);
         window.add(&webview);
-
-        let assets = Assets::init()?;
 
         Ok(App { window, webview, assets })
     }
