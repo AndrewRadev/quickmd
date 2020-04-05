@@ -36,7 +36,7 @@ impl App {
 
         let title = match input_file {
             InputFile::Filesystem(p) => format!("{} - Quickmd", p.short_path().display()),
-            InputFile::Stdin(_)      => format!("Quickmd"),
+            InputFile::Stdin(_)      => String::from("Quickmd"),
         };
         window.set_title(&title);
 

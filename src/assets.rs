@@ -115,7 +115,7 @@ impl Assets {
             });
 
         let mut hl_tags = String::new();
-        if content.code_languages.len() > 0 {
+        if !content.code_languages.is_empty() {
             let root_url = format!(
                 "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/{}",
                 HIGHLIGHT_JS_VERSION
