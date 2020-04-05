@@ -5,7 +5,7 @@
 use std::fs;
 use std::io;
 use std::path::PathBuf;
-use pulldown_cmark::{Parser, html};
+use pulldown_cmark::{Parser, Options, html};
 
 /// Encapsulates a markdown file and provides an interface to turn its contents into HTML.
 ///
@@ -32,7 +32,13 @@ impl Renderer {
     pub fn run(&self) -> Result<String, io::Error> {
         let markdown = fs::read_to_string(&self.canonical_md_path)?;
 
-        let parser = Parser::new(&markdown);
+        let mut options = Options::empty();
+        options.insert(Options::ENABLE_TABLES);
+        options.insert(Options::ENABLE_FOOTNOTES);
+        options.insert(Options::ENABLE_TASKLISTS);
+        options.insert(Options::ENABLE_STRIKETHROUGH);
+        let parser = Parser::new_ext(&markdown, options);
+
         let mut output = String::new();
         html::push_html(&mut output, parser);
         Ok(output)
