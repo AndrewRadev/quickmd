@@ -10,13 +10,15 @@ use webkit2gtk::{WebContext, WebView, WebViewExt};
 
 use crate::assets::{Assets, PageState};
 use crate::input::InputFile;
+use crate::markdown::RenderedContent;
 
 /// Events that trigger UI changes.
 ///
 #[derive(Debug)]
 pub enum Event {
-    /// Load the given HTML string into the webview.
-    LoadHtml(String),
+    /// Load the given content into the webview.
+    LoadHtml(RenderedContent),
+
     /// Refresh the webview.
     Reload,
 }
@@ -65,8 +67,8 @@ impl App {
 
         ui_receiver.attach(None, move |event| {
             match event {
-                Event::LoadHtml(html) => {
-                    app_clone.load_html(&html).
+                Event::LoadHtml(content) => {
+                    app_clone.load_content(&content).
                         unwrap_or_else(|e| warn!("Couldn't update HTML: {}", e))
                 },
                 Event::Reload => app_clone.reload(),
@@ -86,7 +88,7 @@ impl App {
         self.assets.clean_up();
     }
 
-    fn load_html(&mut self, html: &str) -> anyhow::Result<()> {
+    fn load_content(&mut self, content: &RenderedContent) -> anyhow::Result<()> {
         let page_state = match self.webview.get_title() {
             Some(t) => {
                 serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
@@ -96,7 +98,7 @@ impl App {
             },
             None => PageState::default(),
         };
-        let output_path = self.assets.build(html, &page_state)?;
+        let output_path = self.assets.build(content, &page_state)?;
 
         debug!("Loading HTML:");
         debug!(" > output_path = {}", output_path.display());

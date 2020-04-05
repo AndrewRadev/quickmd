@@ -8,6 +8,7 @@
 //! contents as `<script>` and `<style>` tags, making the output easier to read and debug.
 
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -19,9 +20,13 @@ use log::{debug, warn};
 use serde::{Serialize, Deserialize};
 use tempfile::{tempdir, TempDir};
 
+use crate::markdown::RenderedContent;
+
 const MAIN_JS:    &str = include_str!("../res/js/main.js");
 const MAIN_CSS:   &str = include_str!("../res/style/main.css");
 const GITHUB_CSS: &str = include_str!("../res/style/github.css");
+
+const HIGHLIGHT_JS_VERSION: &str = "9.18.1";
 
 /// The client-side state of the page as the user's interacted with it. Currently, includes the
 /// scroll position and the heights of images on the page (Note: not yet implemented), so that
@@ -73,7 +78,7 @@ impl Assets {
                 let temp_dir = Some(Rc::new(temp_dir));
                 Assets { temp_dir, real_dir: None }
             };
-        // We just constructed it, so an output path should exist:
+        // [Unwrap] We just constructed it, so an output path should exist:
         let output_path = assets.output_path().unwrap();
 
         fs::write(output_path.join("main.js"), MAIN_JS).
@@ -91,13 +96,13 @@ impl Assets {
     ///
     /// Input:
     ///
-    /// - `html`:       The HTML fragment to write to a file
-    /// - `scroll_top`: A scroll position to embed in the document, so it can read it via javascript
-    ///                 and reposition itself.
+    /// - `content`:    The rendered HTML to write to a file.
+    /// - `page_state`: Client-side data to embed in the document, so it can read it via javascript
+    ///                 and maintain continuity with the previous load.
     ///
     /// Returns the path to the generated HTML file, or an error.
     ///
-    pub fn build(&self, html: &str, page_state: &PageState) -> anyhow::Result<PathBuf> {
+    pub fn build(&self, content: &RenderedContent, page_state: &PageState) -> anyhow::Result<PathBuf> {
         let output_path = self.output_path()?;
         let home_path = home_dir().
             map(|p| p.display().to_string()).
@@ -109,14 +114,40 @@ impl Assets {
                 String::from("{}")
             });
 
+        let mut hl_tags = String::new();
+        if content.code_languages.len() > 0 {
+            let root_url = format!(
+                "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/{}",
+                HIGHLIGHT_JS_VERSION
+            );
+
+            // [Unwrap] Writing to a String should not fail
+            writeln!(hl_tags, r#"<link rel="stylesheet" href="{}/styles/github.min.css" />"#, root_url).
+                unwrap();
+            writeln!(hl_tags, r#"<script src="{}/highlight.min.js"></script>"#, root_url).
+                unwrap();
+
+            for language in &content.code_languages {
+                writeln!(
+                    hl_tags,
+                    r#"<script src="{}/languages/{}.min.js"></script>"#,
+                    root_url, language
+                ).unwrap();
+            }
+
+            writeln!(hl_tags, r#"<script>hljs.initHighlighting()</script>"#).unwrap();
+        }
+
         debug!("Building HTML:");
-        debug!(" > home_path  = {}", home_path);
-        debug!(" > page_state = {:?}", json_state);
+        debug!(" > home_path      = {:?}", home_path);
+        debug!(" > page_state     = {:?}", json_state);
+        debug!(" > code languages = {:?}", content.code_languages);
 
         let page = format! {
             include_str!("../res/layout.html"),
             home_path=home_path,
-            body=html,
+            body=content.html,
+            hl_tags=hl_tags,
             page_state=json_state,
         };
 

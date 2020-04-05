@@ -1,6 +1,8 @@
 use std::fs;
 use claim::assert_matches;
+
 use quickmd::assets::{Assets, PageState};
+use quickmd::markdown::RenderedContent;
 
 macro_rules! assert_contains {
     ($haystack:expr, $needle:expr) => {
@@ -28,11 +30,14 @@ fn test_multiple_cleanups_work() {
 #[test]
 fn test_building_a_file_with_assets_includes_the_given_html() {
     let assets = Assets::init(None).unwrap();
-    let html = "<h1>Example</h1>";
+    let content = RenderedContent {
+        html: String::from("<h1>Example</h1>"),
+        ..RenderedContent::default()
+    };
 
-    let path = assets.build(html, &PageState::default()).unwrap();
+    let path = assets.build(&content, &PageState::default()).unwrap();
 
-    assert!(fs::read_to_string(&path).unwrap().contains(html));
+    assert!(fs::read_to_string(&path).unwrap().contains(&content.html));
     assert!(fs::read_to_string(&path).unwrap().contains("main.js"));
     assert!(fs::read_to_string(&path).unwrap().contains("main.css"));
 }
@@ -40,7 +45,7 @@ fn test_building_a_file_with_assets_includes_the_given_html() {
 #[test]
 fn test_building_a_file_with_assets_includes_main_static_files() {
     let assets = Assets::init(None).unwrap();
-    let path = assets.build("", &PageState::default()).unwrap();
+    let path = assets.build(&RenderedContent::default(), &PageState::default()).unwrap();
 
     assert!(fs::read_to_string(&path).unwrap().contains("main.js"));
     assert!(fs::read_to_string(&path).unwrap().contains("main.css"));
@@ -50,7 +55,7 @@ fn test_building_a_file_with_assets_includes_main_static_files() {
 fn test_building_a_file_with_assets_includes_scroll_position_as_the_title() {
     let assets = Assets::init(None).unwrap();
     let page_state = PageState { scroll_top: 100.5, ..PageState::default() };
-    let path = assets.build("", &page_state).unwrap();
+    let path = assets.build(&RenderedContent::default(), &page_state).unwrap();
 
     // Yes, it's included as the title, it's kind of dumb, but incredibly easy compared to the
     // alternative.
@@ -67,7 +72,7 @@ fn test_output_to_a_given_directory() {
     let mut assets = Assets::init(Some(path.clone())).unwrap();
 
     assert!(!path.join("index.html").exists());
-    assets.build("", &PageState::default()).unwrap();
+    assets.build(&RenderedContent::default(), &PageState::default()).unwrap();
     assert!(path.join("index.html").exists());
 
     // Clearing asset tempdir should not remove explicitly given directory
@@ -86,7 +91,7 @@ fn test_will_create_output_dir_if_it_doesnt_exist() {
     let assets = Assets::init(Some(path.clone())).unwrap();
 
     assert!(!path.join("index.html").exists());
-    assets.build("", &PageState::default()).unwrap();
+    assets.build(&RenderedContent::default(), &PageState::default()).unwrap();
     assert!(path.join("index.html").exists());
 }
 
