@@ -10,51 +10,6 @@ use std::io;
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
-/// The file used as input to the application. Could be an existing file path or STDIN.
-#[derive(Debug, Clone)]
-pub enum InputFile {
-    /// A path representing a file on the filesystem.
-    Filesystem(PathBuf),
-
-    /// STDIN, written to a named tempfile. It's packaged in an Rc, so we can safely clone the
-    /// structure.
-    Stdin(Rc<NamedTempFile>),
-}
-
-impl InputFile {
-    /// Construct an `InputFile` based on the given path.
-    ///
-    /// If the path is "-", the given `contents` are assumed to be STDIN, they're written down in a
-    /// tempfile and returned. Otherwise, that parameter is ignored.
-    ///
-    pub fn from(path: &Path, mut contents: impl io::Read) -> anyhow::Result<InputFile> {
-        if path == PathBuf::from("-") {
-            let mut tempfile = NamedTempFile::new()?;
-            io::copy(&mut contents, &mut tempfile)?;
-
-            Ok(InputFile::Stdin(Rc::new(tempfile)))
-        } else {
-            Ok(InputFile::Filesystem(path.to_path_buf()))
-        }
-    }
-
-    /// Get the path to a real file on the filesystem.
-    pub fn path(&self) -> &Path {
-        match self {
-            Self::Filesystem(path_buf) => path_buf.as_path(),
-            Self::Stdin(tempfile)      => tempfile.path(),
-        }
-    }
-
-    /// Only true if the struct represents an actual file.
-    pub fn is_real_file(&self) -> bool {
-        match self {
-            Self::Filesystem(_) => true,
-            _                   => false,
-        }
-    }
-}
-
 /// Command-line options. Managed by StructOpt.
 #[derive(Debug, StructOpt)]
 #[structopt(name = "quickmd", about = "A simple markdown previewer.")]
@@ -100,6 +55,51 @@ impl Options {
                 format_timestamp(None).
                 filter_level(log::LevelFilter::Warn).
                 init();
+        }
+    }
+}
+
+/// The file used as input to the application. Could be an existing file path or STDIN.
+#[derive(Debug, Clone)]
+pub enum InputFile {
+    /// A path representing a file on the filesystem.
+    Filesystem(PathBuf),
+
+    /// STDIN, written to a named tempfile. It's packaged in an Rc, so we can safely clone the
+    /// structure.
+    Stdin(Rc<NamedTempFile>),
+}
+
+impl InputFile {
+    /// Construct an `InputFile` based on the given path.
+    ///
+    /// If the path is "-", the given `contents` are assumed to be STDIN, they're written down in a
+    /// tempfile and returned. Otherwise, that parameter is ignored.
+    ///
+    pub fn from(path: &Path, mut contents: impl io::Read) -> anyhow::Result<InputFile> {
+        if path == PathBuf::from("-") {
+            let mut tempfile = NamedTempFile::new()?;
+            io::copy(&mut contents, &mut tempfile)?;
+
+            Ok(InputFile::Stdin(Rc::new(tempfile)))
+        } else {
+            Ok(InputFile::Filesystem(path.to_path_buf()))
+        }
+    }
+
+    /// Get the path to a real file on the filesystem.
+    pub fn path(&self) -> &Path {
+        match self {
+            Self::Filesystem(path_buf) => path_buf.as_path(),
+            Self::Stdin(tempfile)      => tempfile.path(),
+        }
+    }
+
+    /// Only true if the struct represents an actual file.
+    pub fn is_real_file(&self) -> bool {
+        match self {
+            Self::Filesystem(_) => true,
+            _                   => false,
         }
     }
 }

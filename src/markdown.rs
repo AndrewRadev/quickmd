@@ -9,18 +9,6 @@ use std::path::PathBuf;
 use std::collections::HashSet;
 use pulldown_cmark::{Parser, Options, Event, html};
 
-/// The output of the rendering process. Includes both the rendered HTML and additional metadata
-/// used by its clients.
-///
-#[derive(Debug, Default)]
-pub struct RenderedContent {
-    /// The rendered HTML.
-    pub html: String,
-
-    /// All the languages in fenced code blocks from the markdown input.
-    pub code_languages: HashSet<String>,
-}
-
 /// Encapsulates a markdown file and provides an interface to turn its contents into HTML.
 ///
 pub struct Renderer {
@@ -74,4 +62,16 @@ impl Renderer {
             code_languages: languages,
         })
     }
+}
+
+/// The output of the rendering process. Includes both the rendered HTML and additional metadata
+/// used by its clients.
+///
+#[derive(Debug, Default)]
+pub struct RenderedContent {
+    /// The rendered HTML.
+    pub html: String,
+
+    /// All the languages in fenced code blocks from the markdown input.
+    pub code_languages: HashSet<String>,
 }

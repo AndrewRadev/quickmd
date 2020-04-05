@@ -12,17 +12,6 @@ use crate::assets::{Assets, PageState};
 use crate::input::InputFile;
 use crate::markdown::RenderedContent;
 
-/// Events that trigger UI changes.
-///
-#[derive(Debug)]
-pub enum Event {
-    /// Load the given content into the webview.
-    LoadHtml(RenderedContent),
-
-    /// Refresh the webview.
-    Reload,
-}
-
 /// The container for all the GTK widgets of the app -- window, webview, etc.
 /// Reference-counted, so should be cheap to clone.
 ///
@@ -125,4 +114,15 @@ impl App {
             Inhibit(false)
         });
     }
+}
+
+/// Events that trigger UI changes.
+///
+#[derive(Debug)]
+pub enum Event {
+    /// Load the given content into the webview.
+    LoadHtml(RenderedContent),
+
+    /// Refresh the webview.
+    Reload,
 }
