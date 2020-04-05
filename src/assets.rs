@@ -41,11 +41,12 @@ pub struct PageState {
 
 /// A container for static assets.
 ///
-/// Has a temporary directory where it builds everything. Internally reference-counted, so clones
-/// share the same storage.
+/// Builds everything in either the explicitly-given directory, or a temporary one. Internally
+/// reference-counted, so clones share the same storage.
 ///
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Assets {
+    real_dir: Option<PathBuf>,
     temp_dir: Option<Rc<TempDir>>,
 }
 
@@ -53,17 +54,36 @@ impl Assets {
     /// Create a new instance. It should never be necessary to create more than one, but it's
     /// possible.
     ///
-    pub fn init() -> Result<Self, io::Error> {
-        let temp_dir = tempdir()?;
+    /// If the optional `output_dir` parameter is not given, the instance will use a temporary
+    /// directory.
+    ///
+    /// If `output_dir` doesn't exist, it will be recursively created.
+    ///
+    pub fn init(output_dir: Option<PathBuf>) -> Result<Self, io::Error> {
+        let assets =
+            if let Some(real_dir) = output_dir {
+                if !real_dir.is_dir() {
+                    fs::create_dir_all(&real_dir)?;
+                }
 
-        fs::write(temp_dir.path().join("main.js"), MAIN_JS).
+                let real_dir = Some(real_dir.canonicalize()?);
+                Assets { real_dir, temp_dir: None }
+            } else {
+                let temp_dir = tempdir()?;
+                let temp_dir = Some(Rc::new(temp_dir));
+                Assets { temp_dir, real_dir: None }
+            };
+        // We just constructed it, so an output path should exist:
+        let output_path = assets.output_path().unwrap();
+
+        fs::write(output_path.join("main.js"), MAIN_JS).
             unwrap_or_else(|e| warn!("{}", e));
-        fs::write(temp_dir.path().join("main.css"), MAIN_CSS).
+        fs::write(output_path.join("main.css"), MAIN_CSS).
             unwrap_or_else(|e| warn!("{}", e));
-        fs::write(temp_dir.path().join("github.css"), GITHUB_CSS).
+        fs::write(output_path.join("github.css"), GITHUB_CSS).
             unwrap_or_else(|e| warn!("{}", e));
 
-        Ok(Assets { temp_dir: Some(Rc::new(temp_dir)) })
+        Ok(assets)
     }
 
     /// Given an HTML fragment, wrap it up in whatever is necessary to turn it into a proper
@@ -78,9 +98,7 @@ impl Assets {
     /// Returns the path to the generated HTML file, or an error.
     ///
     pub fn build(&self, html: &str, page_state: &PageState) -> anyhow::Result<PathBuf> {
-        let temp_dir = self.temp_dir.clone().
-            ok_or_else(|| anyhow!("TempDir deleted, there might be a synchronization error"))?;
-
+        let output_path = self.output_path()?;
         let home_path = home_dir().
             map(|p| p.display().to_string()).
             unwrap_or_else(String::new);
@@ -102,20 +120,31 @@ impl Assets {
             page_state=json_state,
         };
 
-        let output_path = temp_dir.path().join("output.html");
-        fs::write(&output_path, page.as_bytes())?;
+        let html_path = output_path.join("index.html");
+        fs::write(&html_path, page.as_bytes())?;
 
-        Ok(output_path)
+        Ok(html_path)
     }
 
-    /// Delete all the storage for the structure. This should happen automatically on drop, but a
-    /// GTK-level exit doesn't seem to unroll the stack, so we may need to delete things
-    /// explicitly.
+    /// The path on the filesystem where the HTML and other assets go. Could be a temporary
+    /// directory, or the one given at construction time.
+    ///
+    pub fn output_path(&self) -> anyhow::Result<PathBuf> {
+        match (&self.real_dir, &self.temp_dir) {
+            (Some(path_buf), _) => Ok(path_buf.clone()),
+            (_, Some(temp_dir)) => Ok(temp_dir.path().to_path_buf()),
+            _ => Err(anyhow!("Assets don't have an output dir, there might be a synchronization error"))
+        }
+    }
+
+    /// Delete the temporary directory used for building assets, if there is one. This should
+    /// happen automatically on drop, but a GTK-level exit doesn't seem to unroll the stack, so we
+    /// may need to delete things explicitly.
     ///
     /// If deletion fails, we quietly print a warning. Multiple (successful or failed) deletions
     /// are a noop.
     ///
-    pub fn delete(&mut self) {
+    pub fn clean_up(&mut self) {
         if let Some(temp_dir) = self.temp_dir.take() {
             let path = temp_dir.path();
             fs::remove_dir_all(path).unwrap_or_else(|_| {

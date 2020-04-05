@@ -83,7 +83,7 @@ impl App {
 
         gtk::main();
 
-        self.assets.delete();
+        self.assets.clean_up();
     }
 
     fn load_html(&mut self, html: &str) -> anyhow::Result<()> {

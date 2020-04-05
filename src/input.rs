@@ -70,6 +70,11 @@ pub struct Options {
     /// Disables watching file for changes
     #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
     pub watch: bool,
+
+    /// Build output HTML and other assets in the given directory instead of in a tempdir.
+    /// Will be created if it doesn't exist. Not deleted on application exit.
+    #[structopt(long = "output", name = "directory")]
+    pub output_dir: Option<PathBuf>,
 }
 
 impl Options {

@@ -32,7 +32,7 @@ fn run(options: &Options) -> anyhow::Result<()> {
         return Err(error);
     }
     let renderer = Renderer::new(md_path.to_path_buf());
-    let assets = Assets::init()?;
+    let assets = Assets::init(options.output_dir.clone())?;
 
     let mut ui = ui::App::init(input_file.clone(), assets)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
