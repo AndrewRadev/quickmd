@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.2.0] - 2020-04-05
 
 - Added: Image sizes are cached via javascript and set on page reload. That way, reloading the
   browser due to text changes should not lead to any flicker.
