@@ -1,6 +1,7 @@
 //! Markdown rendering.
 //!
-//! Currently, just uses the `pulldown_cmark` in the simplest of ways.
+//! Uses the `pulldown_cmark` crate with Github-flavored markdown options enabled. Extracts
+//! languages used in code blocks for highlighting purposes.
 
 use std::fs;
 use std::io;
