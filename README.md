@@ -41,13 +41,13 @@ USAGE:
     quickmd [FLAGS] <input-file.md>
 
 FLAGS:
-    -d, --debug       Activate debug logging
+    -d, --debug       Activates debug logging
     -h, --help        Prints help information
     -V, --version     Prints version information
         --no-watch    Disables watching file for changes
 
 ARGS:
-    <input-file.md>    Markdown file to render
+    <input-file.md>    Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
 ```
 
 ## Configuration
