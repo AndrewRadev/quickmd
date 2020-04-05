@@ -50,6 +50,16 @@ ARGS:
     <input-file.md>    Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
 ```
 
+## Features
+
+- Github-like rendering, though not guaranteed to be perfectly identical. Relying on whatever [pulldown-cmark](https://crates.io/crates/pulldown-cmark) provides, which is good enough for me.
+
+- Fast and seamless preview updates on file write.
+
+- Code highlighting via [highlight.js](https://highlightjs.org/). Currently, the relevant javascript is included via a CDN, which unfortunately means it won't work without an internet connection.
+
+- Ability to render STDIN, which allows partial rendering of target markdown. Try putting [this bit of Vimscript](https://github.com/AndrewRadev/Vimfiles/blob/f9e0c08dd280d13acb625d3370da399c39e14403/ftplugin/markdown.vim#L11-L15) in your `~/.vim/ftplugin/markdown.vim`, select a few lines and press `!`.
+
 ## Configuration
 
 You can change the CSS of the preview HTML by writing CSS in one of these files:
