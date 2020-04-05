@@ -29,18 +29,18 @@ const GITHUB_CSS: &str = include_str!("../res/style/github.css");
 const HIGHLIGHT_JS_VERSION: &str = "9.18.1";
 
 /// The client-side state of the page as the user's interacted with it. Currently, includes the
-/// scroll position and the heights of images on the page (Note: not yet implemented), so that
-/// reloading doesn't change the viewport.
+/// scroll position and the dimensions of images on the page, so that reloading doesn't change the
+/// viewport.
 ///
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct PageState {
     /// Scroll position of the page.
     pub scroll_top: f64,
 
-    /// A cache of all the widths of images in the page, keyed by src URL.
+    /// A cache of all the widths of images in the page, keyed by their URLs.
     pub image_widths: HashMap<String, f64>,
 
-    /// A cache of all the heights of images in the page, keyed by src URL.
+    /// A cache of all the heights of images in the page, keyed by their URLs.
     pub image_heights: HashMap<String, f64>,
 }
 
@@ -96,7 +96,7 @@ impl Assets {
     ///
     /// Input:
     ///
-    /// - `content`:    The rendered HTML to write to a file.
+    /// - `content`:    The rendered HTML to write to a file, with some additional metadata.
     /// - `page_state`: Client-side data to embed in the document, so it can read it via javascript
     ///                 and maintain continuity with the previous load.
     ///

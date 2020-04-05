@@ -1,4 +1,4 @@
-//! Input handling
+//! Input handling.
 //!
 //! Currently, this only includes handling command-line options. Potentially the place to handle
 //! any other type of configuration and input to the application.
@@ -26,7 +26,7 @@ pub struct Options {
     #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
     pub watch: bool,
 
-    /// Build output HTML and other assets in the given directory instead of in a tempdir.
+    /// Builds output HTML and other assets in the given directory instead of in a tempdir.
     /// Will be created if it doesn't exist. Not deleted on application exit.
     #[structopt(long = "output", name = "directory")]
     pub output_dir: Option<PathBuf>,
@@ -35,7 +35,7 @@ pub struct Options {
 impl Options {
     /// Start logging based on input flags.
     ///
-    /// With --debug:
+    /// With `--debug`:
     ///   - All logs
     ///   - Timestamps
     ///   - Module path context
