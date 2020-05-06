@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.3.0] - 2020-05-06
 
 - Added: Code highlighting
 - Added: GFM features like tables and strikethrough (basically, whatever [pulldown-cmark provides](https://docs.rs/pulldown-cmark/0.7.0/pulldown_cmark/struct.Options.html))

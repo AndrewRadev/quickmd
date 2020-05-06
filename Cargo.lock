@@ -676,7 +676,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "quickmd"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow 1.0.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "claim 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
