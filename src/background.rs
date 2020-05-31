@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 use std::marker::Send;
 
-use dirs::home_dir;
+use directories::ProjectDirs;
 use log::{debug, error, warn};
 use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
 
@@ -77,17 +77,14 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
 
         let mut extra_watch_paths = vec![];
 
-        if let Some(home) = home_dir() {
-            let config_path = home.join(".quickmd.css");
-            if watcher.watch(&config_path, RecursiveMode::NonRecursive).is_ok() {
-                debug!("Watching {}", config_path.display());
-                extra_watch_paths.push(config_path);
-            }
+        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
+            map(|pd| pd.config_dir().to_owned());
 
-            let config_path = home.join(".config/quickmd.css");
-            if watcher.watch(&config_path, RecursiveMode::NonRecursive).is_ok() {
-                debug!("Watching {}", config_path.display());
-                extra_watch_paths.push(config_path);
+        if let Some(config_path) = config_path {
+            let css_path = config_path.join("custom.css");
+            if watcher.watch(&css_path, RecursiveMode::NonRecursive).is_ok() {
+                debug!("Watching {}", css_path.display());
+                extra_watch_paths.push(css_path);
             }
         }
 

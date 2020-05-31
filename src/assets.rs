@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
-use dirs::home_dir;
+use directories::ProjectDirs;
 use log::{debug, warn};
 use serde::{Serialize, Deserialize};
 use tempfile::{tempdir, TempDir};
@@ -104,9 +104,9 @@ impl Assets {
     ///
     pub fn build(&self, content: &RenderedContent, page_state: &PageState) -> anyhow::Result<PathBuf> {
         let output_path = self.output_path()?;
-        let home_path = home_dir().
-            map(|p| p.display().to_string()).
-            unwrap_or_else(String::new);
+        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
+            map(|pd| pd.config_dir().display().to_string()).
+            unwrap_or(String::from("."));
 
         let json_state = serde_json::to_string(page_state).
             unwrap_or_else(|e| {
@@ -139,13 +139,13 @@ impl Assets {
         }
 
         debug!("Building HTML:");
-        debug!(" > home_path      = {:?}", home_path);
+        debug!(" > config_path    = {:?}", config_path);
         debug!(" > page_state     = {:?}", json_state);
         debug!(" > code languages = {:?}", content.code_languages);
 
         let page = format! {
             include_str!("../res/layout.html"),
-            home_path=home_path,
+            config_path=config_path,
             body=content.html,
             hl_tags=hl_tags,
             page_state=json_state,
