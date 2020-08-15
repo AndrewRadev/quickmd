@@ -20,6 +20,7 @@ use log::{debug, warn};
 use serde::{Serialize, Deserialize};
 use tempfile::{tempdir, TempDir};
 
+use crate::input::Config;
 use crate::markdown::RenderedContent;
 
 const MAIN_JS:    &str = include_str!("../res/js/main.js");
@@ -51,6 +52,7 @@ pub struct PageState {
 ///
 #[derive(Debug, Clone)]
 pub struct Assets {
+    config: Config,
     real_dir: Option<PathBuf>,
     temp_dir: Option<Rc<TempDir>>,
 }
@@ -64,7 +66,7 @@ impl Assets {
     ///
     /// If `output_dir` doesn't exist, it will be recursively created.
     ///
-    pub fn init(output_dir: Option<PathBuf>) -> Result<Self, io::Error> {
+    pub fn init(config: Config, output_dir: Option<PathBuf>) -> Result<Self, io::Error> {
         let assets =
             if let Some(real_dir) = output_dir {
                 if !real_dir.is_dir() {
@@ -72,11 +74,11 @@ impl Assets {
                 }
 
                 let real_dir = Some(real_dir.canonicalize()?);
-                Assets { real_dir, temp_dir: None }
+                Assets { config, real_dir, temp_dir: None }
             } else {
                 let temp_dir = tempdir()?;
                 let temp_dir = Some(Rc::new(temp_dir));
-                Assets { temp_dir, real_dir: None }
+                Assets { config, temp_dir, real_dir: None }
             };
         // [Unwrap] We just constructed it, so an output path should exist:
         let output_path = assets.output_path().unwrap();
@@ -104,6 +106,7 @@ impl Assets {
     ///
     pub fn build(&self, content: &RenderedContent, page_state: &PageState) -> anyhow::Result<PathBuf> {
         let output_path = self.output_path()?;
+        // TODO: Maybe `Config::css_path()`?
         let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
             map(|pd| pd.config_dir().display().to_string()).
             unwrap_or(String::from("."));
@@ -148,6 +151,7 @@ impl Assets {
             config_path=config_path,
             body=content.html,
             hl_tags=hl_tags,
+            zoom=self.config.zoom,
             page_state=json_state,
         };
 

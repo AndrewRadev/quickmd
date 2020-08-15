@@ -21,13 +21,13 @@ fn main() {
         unwrap_or_else(Config::default);
     debug!("Loaded config: {:?}", config);
 
-    if let Err(e) = run(&options) {
+    if let Err(e) = run(&options, &config) {
         eprintln!("{}", e);
         process::exit(1);
     }
 }
 
-fn run(options: &Options) -> anyhow::Result<()> {
+fn run(options: &Options, config: &Config) -> anyhow::Result<()> {
     gtk::init()?;
 
     let input_file   = InputFile::from(&options.input_file, io::stdin())?;
@@ -39,7 +39,7 @@ fn run(options: &Options) -> anyhow::Result<()> {
         return Err(error);
     }
     let renderer = Renderer::new(md_path.to_path_buf());
-    let assets = Assets::init(options.output_dir.clone())?;
+    let assets = Assets::init(config.clone(), options.output_dir.clone())?;
 
     let mut ui = ui::App::init(input_file.clone(), assets)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);

@@ -66,9 +66,12 @@ impl Options {
 /// Configuration that controls the behaviour of the app. Saved in a file in the standard app
 /// config directory named "quickmd.json".
 ///
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    zoom: f32,
+    /// The zoom level of the page. Defaults to 1.0, but on a HiDPI screen should be set to a
+    /// higher value. Translates into a CSS "zoom" set on the page body.
+    ///
+    pub zoom: f32,
 }
 
 impl Default for Config {
