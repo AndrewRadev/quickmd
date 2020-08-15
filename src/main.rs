@@ -2,17 +2,24 @@ use std::io;
 use std::process;
 
 use anyhow::anyhow;
+use log::debug;
 use structopt::StructOpt;
 
 use quickmd::assets::Assets;
 use quickmd::background;
-use quickmd::input::{InputFile, Options};
+use quickmd::input::{InputFile, Options, Config};
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 
 fn main() {
     let options = Options::from_args();
+    debug!("Using input options: {:?}", options);
+
     options.init_logging();
+
+    let config = Config::load().
+        unwrap_or_else(Config::default);
+    debug!("Loaded config: {:?}", config);
 
     if let Err(e) = run(&options) {
         eprintln!("{}", e);

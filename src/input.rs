@@ -3,10 +3,14 @@
 //! Currently, this only includes handling command-line options. Potentially the place to handle
 //! any other type of configuration and input to the application.
 
+use std::fs::File;
+use std::io;
 use std::path::{PathBuf, Path};
 use std::rc::Rc;
-use std::io;
 
+use directories::ProjectDirs;
+use log::{debug, error};
+use serde::{Serialize, Deserialize};
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
@@ -56,6 +60,38 @@ impl Options {
                 filter_level(log::LevelFilter::Warn).
                 init();
         }
+    }
+}
+
+/// Configuration that controls the behaviour of the app. Saved in a file in the standard app
+/// config directory named "quickmd.json".
+///
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    zoom: f32,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self { zoom: 1.0 }
+    }
+}
+
+impl Config {
+    /// Loads the config from its standard location, or returns None if the file couldn't be found
+    /// or is invalid.
+    ///
+    pub fn load() -> Option<Self> {
+        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
+            map(|pd| pd.config_dir().join("quickmd.json"))?;
+
+        let config_file = File::open(config_path).map_err(|_| {
+            debug!("Didn't find config file.");
+        }).ok()?;
+
+        serde_json::from_reader(&config_file).map_err(|e| {
+            error!("Couldn't parse JSON config file: {}", e);
+        }).ok()
     }
 }
 
