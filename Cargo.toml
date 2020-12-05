@@ -16,7 +16,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 anyhow         = "1.0.26"
 dirs           = "2.0.2"
-env_logger     = "0.7.1"
+env_logger     = { version = "0.8.2", default-features = false }
 gdk            = "0.10"
 gio            = "0.6"
 glib           = "0.7"
