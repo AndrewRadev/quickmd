@@ -37,14 +37,21 @@ quickmd <markdown-file>
 Pressing escape will close the window. Running it with `--help` should provide more info on the available options:
 
 ```
+quickmd 0.3.0
+A simple markdown previewer.
+
 USAGE:
-    quickmd [FLAGS] <input-file.md>
+    quickmd [FLAGS] [OPTIONS] <input-file.md>
 
 FLAGS:
     -d, --debug       Activates debug logging
     -h, --help        Prints help information
     -V, --version     Prints version information
         --no-watch    Disables watching file for changes
+
+OPTIONS:
+        --output <directory>    Builds output HTML and other assets in the given directory instead of in a tempdir. Will
+                                be created if it doesn't exist. Not deleted on application exit
 
 ARGS:
     <input-file.md>    Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
