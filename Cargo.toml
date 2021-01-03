@@ -15,7 +15,7 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 anyhow         = "1.0.26"
-dirs           = "2.0.2"
+dirs           = "3.0.1"
 env_logger     = { version = "0.8.2", default-features = false }
 gdk            = "0.10"
 gio            = "0.6"
@@ -24,7 +24,7 @@ gtk            = { version = "0.6.0", features = ["v3_16"] }
 log            = "0.4"
 notify         = "4.0.15"
 pathbuftools   = "0.1.2"
-pulldown-cmark = { version = "0.7.0", default-features = false, features = ["simd"] }
+pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"] }
 serde          = { version = "1.0", features = ["derive"] }
 serde_json     = "1.0"
 structopt      = { version = "0.3.11", default-features = false }
@@ -32,4 +32,4 @@ tempfile       = "3.1.0"
 webkit2gtk     = "0.7"
 
 [dev-dependencies]
-claim = "0.3"
+claim = "0.4.0"
