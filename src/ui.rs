@@ -1,7 +1,7 @@
 //! The GTK user interface.
 
 use anyhow::anyhow;
-use gdk::enums::key;
+use gdk::keys;
 use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use log::{debug, warn};
@@ -42,7 +42,7 @@ impl App {
 
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
-        let webview = WebView::new_with_context(&web_context);
+        let webview = WebView::with_context(&web_context);
         window.add(&webview);
 
         Ok(App { window, webview, assets })
@@ -103,7 +103,7 @@ impl App {
     fn connect_events(&self) {
         // Each key press will invoke this function.
         self.window.connect_key_press_event(move |_window, gdk| {
-            if let key::Escape = gdk.get_keyval() {
+            if let keys::constants::Escape = gdk.get_keyval() {
                 gtk::main_quit();
             }
             Inhibit(false)

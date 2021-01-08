@@ -17,10 +17,10 @@ maintenance = { status = "actively-developed" }
 anyhow         = "1.0.26"
 dirs           = "3.0.1"
 env_logger     = { version = "0.8.2", default-features = false }
-gdk            = "0.10"
-gio            = "0.6"
-glib           = "0.7"
-gtk            = { version = "0.6.0", features = ["v3_16"] }
+gdk            = "0.13.2"
+gio            = "0.9.1"
+glib           = "0.10.3"
+gtk            = { version = "0.9.0", features = ["v3_16"] }
 log            = "0.4"
 notify         = "4.0.15"
 pathbuftools   = "0.1.2"
@@ -29,7 +29,7 @@ serde          = { version = "1.0", features = ["derive"] }
 serde_json     = "1.0"
 structopt      = { version = "0.3.11", default-features = false }
 tempfile       = "3.1.0"
-webkit2gtk     = "0.7"
+webkit2gtk     = "0.11.0"
 
 [dev-dependencies]
 claim = "0.4.0"
