@@ -6,7 +6,7 @@ use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
-use webkit2gtk::{WebContext, WebView, WebViewExt};
+use webkit2gtk::{WebContext, WebView, WebViewExt, SettingsExt};
 
 use crate::assets::{Assets, PageState};
 use crate::input::InputFile;
@@ -43,6 +43,10 @@ impl App {
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::with_context(&web_context);
+        WebViewExt::get_settings(&webview).map(|settings| {
+            settings.set_zoom_text_only(true);
+        });
+
         window.add(&webview);
 
         Ok(App { window, webview, assets })
@@ -102,10 +106,34 @@ impl App {
 
     fn connect_events(&self) {
         // Each key press will invoke this function.
-        self.window.connect_key_press_event(move |_window, gdk| {
-            if let keys::constants::Escape = gdk.get_keyval() {
+        self.window.connect_key_press_event(move |_window, event| {
+            if let keys::constants::Escape = event.get_keyval() {
                 gtk::main_quit();
             }
+            Inhibit(false)
+        });
+
+        // On Ctrl+Scroll, zoom:
+        let webview = self.webview.clone();
+        self.window.connect_scroll_event(move |_window, event| {
+            if event.get_state().contains(gdk::ModifierType::CONTROL_MASK) {
+                let zoom_level = webview.get_zoom_level();
+
+                match event.get_direction() {
+                    gdk::ScrollDirection::Up => {
+                        webview.set_zoom_level(zoom_level + 0.1);
+                        debug!("Zoom level set to: {}", zoom_level);
+                    },
+                    gdk::ScrollDirection::Down => {
+                        if zoom_level > 0.2 {
+                            webview.set_zoom_level(zoom_level - 0.1);
+                            debug!("Zoom level set to: {}", zoom_level);
+                        }
+                    },
+                    _ => (),
+                }
+            }
+
             Inhibit(false)
         });
 
