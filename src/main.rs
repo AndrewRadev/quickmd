@@ -28,9 +28,15 @@ fn main() {
 }
 
 fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
-    gtk::init()?;
+    if options.install_default_config {
+        return Config::try_install_default();
+    }
 
-    let input_file   = InputFile::from(&options.input_file, io::stdin())?;
+    let input_file = options.input_file.as_ref().ok_or_else(|| {
+        anyhow!("Please provide a markdown file to render or - to read from STDIN")
+    })?;
+
+    let input_file   = InputFile::from(&input_file, io::stdin())?;
     let is_real_file = input_file.is_real_file();
     let md_path      = input_file.path();
 
@@ -38,6 +44,9 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
         let error = anyhow!("File not found: {}", md_path.display());
         return Err(error);
     }
+
+    gtk::init()?;
+
     let renderer = Renderer::new(md_path.to_path_buf());
     let assets = Assets::init(options.output_dir.clone())?;
 

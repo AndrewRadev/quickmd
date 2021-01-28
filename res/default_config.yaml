@@ -1,0 +1,7 @@
+# The default zoom level of the webview. In case of a HiDPI display, it can be useful to set this
+# to a higher value.
+#
+# In the UI, the zoom level can be changed in increments of 0.1 by holding the Control key and
+# scrolling up or down.
+#
+zoom: 1.0

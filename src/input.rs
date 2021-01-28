@@ -8,6 +8,7 @@ use std::io;
 use std::path::{PathBuf, Path};
 use std::rc::Rc;
 
+use anyhow::anyhow;
 use directories::ProjectDirs;
 use log::{debug, error};
 use serde::{Serialize, Deserialize};
@@ -25,7 +26,7 @@ pub struct Options {
 
     /// Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
     #[structopt(name = "input-file.md", parse(from_os_str))]
-    pub input_file: PathBuf,
+    pub input_file: Option<PathBuf>,
 
     /// Disables watching file for changes
     #[structopt(long = "no-watch", parse(from_flag = std::ops::Not::not))]
@@ -35,6 +36,10 @@ pub struct Options {
     /// Will be created if it doesn't exist. Not deleted on application exit.
     #[structopt(long = "output", name = "directory")]
     pub output_dir: Option<PathBuf>,
+
+    /// Creates a configuration file for later editing if one doesn't exist. Exits when done.
+    #[structopt(long)]
+    pub install_default_config: bool,
 }
 
 impl Options {
@@ -128,6 +133,20 @@ impl Config {
         ProjectDirs::from("com", "andrewradev", "quickmd").
             map(|pd| pd.config_dir().join("custom.css")).
             unwrap_or_else(|| PathBuf::from("./quickmd.css"))
+    }
+
+    /// Attempts to install a config file with defaults. Returns an error if a file already exists
+    /// in the expected location.
+    ///
+    pub fn try_install_default() -> anyhow::Result<()> {
+        let yaml_path = Config::yaml_path();
+
+        if yaml_path.exists() {
+            Err(anyhow!("An existing file was found at: {}\n\
+                    If you want to replace it, please delete it first", yaml_path.display()))
+        } else {
+            Ok(std::fs::write(yaml_path, include_str!("../res/default_config.yaml"))?)
+        }
     }
 }
 
