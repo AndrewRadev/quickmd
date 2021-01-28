@@ -15,7 +15,6 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use anyhow::anyhow;
-use directories::ProjectDirs;
 use log::{debug, warn};
 use serde::{Serialize, Deserialize};
 use tempfile::{tempdir, TempDir};
@@ -27,7 +26,11 @@ const MAIN_JS:    &str = include_str!("../res/js/main.js");
 const MAIN_CSS:   &str = include_str!("../res/style/main.css");
 const GITHUB_CSS: &str = include_str!("../res/style/github.css");
 
-const HIGHLIGHT_JS_VERSION: &str = "9.18.1";
+/// The version of highlight.js the app uses for code highlighting.
+///
+/// More details about the tool at https://highlightjs.org/
+///
+pub const HIGHLIGHT_JS_VERSION: &str = "9.18.1";
 
 /// The client-side state of the page as the user's interacted with it. Currently, includes the
 /// scroll position and the dimensions of images on the page, so that reloading doesn't change the
@@ -52,7 +55,6 @@ pub struct PageState {
 ///
 #[derive(Debug, Clone)]
 pub struct Assets {
-    config: Config,
     real_dir: Option<PathBuf>,
     temp_dir: Option<Rc<TempDir>>,
 }
@@ -66,7 +68,7 @@ impl Assets {
     ///
     /// If `output_dir` doesn't exist, it will be recursively created.
     ///
-    pub fn init(config: Config, output_dir: Option<PathBuf>) -> Result<Self, io::Error> {
+    pub fn init(output_dir: Option<PathBuf>) -> Result<Self, io::Error> {
         let assets =
             if let Some(real_dir) = output_dir {
                 if !real_dir.is_dir() {
@@ -74,11 +76,11 @@ impl Assets {
                 }
 
                 let real_dir = Some(real_dir.canonicalize()?);
-                Assets { config, real_dir, temp_dir: None }
+                Assets { real_dir, temp_dir: None }
             } else {
                 let temp_dir = tempdir()?;
                 let temp_dir = Some(Rc::new(temp_dir));
-                Assets { config, temp_dir, real_dir: None }
+                Assets { temp_dir, real_dir: None }
             };
         // [Unwrap] We just constructed it, so an output path should exist:
         let output_path = assets.output_path().unwrap();
@@ -105,11 +107,8 @@ impl Assets {
     /// Returns the path to the generated HTML file, or an error.
     ///
     pub fn build(&self, content: &RenderedContent, page_state: &PageState) -> anyhow::Result<PathBuf> {
-        let output_path = self.output_path()?;
-        // TODO: Maybe `Config::css_path()`?
-        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
-            map(|pd| pd.config_dir().display().to_string()).
-            unwrap_or(String::from("."));
+        let output_path     = self.output_path()?;
+        let custom_css_path = Config::css_path();
 
         let json_state = serde_json::to_string(page_state).
             unwrap_or_else(|e| {
@@ -142,17 +141,16 @@ impl Assets {
         }
 
         debug!("Building HTML:");
-        debug!(" > config_path    = {:?}", config_path);
-        debug!(" > page_state     = {:?}", json_state);
-        debug!(" > code languages = {:?}", content.code_languages);
+        debug!(" > custom_css_path = {:?}", custom_css_path);
+        debug!(" > page_state      = {:?}", json_state);
+        debug!(" > code languages  = {:?}", content.code_languages);
 
         let page = format! {
             include_str!("../res/layout.html"),
-            config_path=config_path,
-            body=content.html,
-            hl_tags=hl_tags,
-            zoom=self.config.zoom,
-            page_state=json_state,
+            custom_css_path = custom_css_path.display(),
+            body            = content.html,
+            hl_tags         = hl_tags,
+            page_state      = json_state,
         };
 
         let html_path = output_path.join("index.html");

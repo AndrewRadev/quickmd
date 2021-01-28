@@ -9,8 +9,6 @@ use quickmd::ui;
 use quickmd::markdown::Renderer;
 use quickmd::background::init_update_loop;
 
-// TODO test for refreshing the page on ~/.quickmd.css change
-
 #[test]
 fn test_update_loop_detects_file_updates() {
     let tempdir = tempfile::tempdir().unwrap();

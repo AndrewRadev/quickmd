@@ -3,31 +3,31 @@ use std::process;
 
 use anyhow::anyhow;
 use log::debug;
-use structopt::StructOpt;
 
 use quickmd::assets::Assets;
 use quickmd::background;
-use quickmd::input::{InputFile, Options, Config};
+use quickmd::input::{Config, Options, InputFile};
 use quickmd::markdown::Renderer;
 use quickmd::ui;
 
 fn main() {
-    let options = Options::from_args();
-    debug!("Using input options: {:?}", options);
-
-    options.init_logging();
-
     let config = Config::load().
         unwrap_or_else(Config::default);
-    debug!("Loaded config: {:?}", config);
 
-    if let Err(e) = run(&options, &config) {
+    let options = Options::build();
+    options.init_logging();
+
+    debug!("Loaded config: {:?}", config);
+    debug!("  > path: {}", Config::yaml_path().display());
+    debug!("Using input options: {:?}", options);
+
+    if let Err(e) = run(&config, &options) {
         eprintln!("{}", e);
         process::exit(1);
     }
 }
 
-fn run(options: &Options, config: &Config) -> anyhow::Result<()> {
+fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
     gtk::init()?;
 
     let input_file   = InputFile::from(&options.input_file, io::stdin())?;
@@ -39,9 +39,9 @@ fn run(options: &Options, config: &Config) -> anyhow::Result<()> {
         return Err(error);
     }
     let renderer = Renderer::new(md_path.to_path_buf());
-    let assets = Assets::init(config.clone(), options.output_dir.clone())?;
+    let assets = Assets::init(options.output_dir.clone())?;
 
-    let mut ui = ui::App::init(input_file.clone(), assets)?;
+    let mut ui = ui::App::init(config, input_file.clone(), assets)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 

@@ -6,10 +6,10 @@ use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
-use webkit2gtk::{WebContext, WebView, WebViewExt, SettingsExt};
+use webkit2gtk::{WebContext, WebView, WebViewExt};
 
 use crate::assets::{Assets, PageState};
-use crate::input::InputFile;
+use crate::input::{InputFile, Config};
 use crate::markdown::RenderedContent;
 
 /// The container for all the GTK widgets of the app -- window, webview, etc.
@@ -30,7 +30,7 @@ impl App {
     ///
     /// Initialization could fail due to a `WebContext` failure.
     ///
-    pub fn init(input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
+    pub fn init(config: &Config, input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -43,9 +43,7 @@ impl App {
         let web_context = WebContext::get_default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::with_context(&web_context);
-        WebViewExt::get_settings(&webview).map(|settings| {
-            settings.set_zoom_text_only(true);
-        });
+        webview.set_zoom_level(config.zoom);
 
         window.add(&webview);
 

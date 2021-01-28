@@ -8,12 +8,12 @@ use std::thread;
 use std::time::Duration;
 use std::marker::Send;
 
-use directories::ProjectDirs;
 use log::{debug, error, warn};
 use notify::{Watcher, RecursiveMode, DebouncedEvent, watcher};
 
-use crate::ui;
+use crate::input::Config;
 use crate::markdown;
+use crate::ui;
 
 /// A common trait for `glib::Sender` and `std::mpsc::Sender`.
 ///
@@ -76,16 +76,11 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
         }
 
         let mut extra_watch_paths = vec![];
+        let custom_css_path = Config::css_path();
 
-        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
-            map(|pd| pd.config_dir().to_owned());
-
-        if let Some(config_path) = config_path {
-            let css_path = config_path.join("custom.css");
-            if watcher.watch(&css_path, RecursiveMode::NonRecursive).is_ok() {
-                debug!("Watching {}", css_path.display());
-                extra_watch_paths.push(css_path);
-            }
+        if watcher.watch(&custom_css_path, RecursiveMode::NonRecursive).is_ok() {
+            debug!("Watching {}", custom_css_path.display());
+            extra_watch_paths.push(custom_css_path);
         }
 
         loop {

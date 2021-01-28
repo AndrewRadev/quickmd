@@ -14,9 +14,10 @@ use serde::{Serialize, Deserialize};
 use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
+use crate::assets::HIGHLIGHT_JS_VERSION;
+
 /// Command-line options. Managed by StructOpt.
 #[derive(Debug, StructOpt)]
-#[structopt(name = "quickmd", about = "A simple markdown previewer.")]
 pub struct Options {
     /// Activates debug logging
     #[structopt(short, long)]
@@ -37,6 +38,26 @@ pub struct Options {
 }
 
 impl Options {
+    /// Creates a new instance by parsing input args. Apart from just running StructOpt's
+    /// initialization, it also adds some additional information to the description that depends on
+    /// the current environment.
+    ///
+    pub fn build() -> Self {
+        let description = &[
+            "A simple self-contained markdown previewer. ",
+            "",
+            &format!("Code highlighting via highlight.js version {}", HIGHLIGHT_JS_VERSION),
+            "",
+            &format!("Edit configuration in: {}", Config::yaml_path().display()),
+            &format!("Add custom CSS in:     {}", Config::css_path().display()),
+        ].join("\n");
+
+        let options_app = Options::clap().
+            long_about(description.as_str());
+
+        Options::from_clap(&options_app.get_matches())
+    }
+
     /// Start logging based on input flags.
     ///
     /// With `--debug`:
@@ -64,14 +85,14 @@ impl Options {
 }
 
 /// Configuration that controls the behaviour of the app. Saved in a file in the standard app
-/// config directory named "quickmd.json".
+/// config directory named "config.yaml".
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     /// The zoom level of the page. Defaults to 1.0, but on a HiDPI screen should be set to a
-    /// higher value. Translates into a CSS "zoom" set on the page body.
+    /// higher value.
     ///
-    pub zoom: f32,
+    pub zoom: f64,
 }
 
 impl Default for Config {
@@ -85,16 +106,28 @@ impl Config {
     /// or is invalid.
     ///
     pub fn load() -> Option<Self> {
-        let config_path = ProjectDirs::from("com", "andrewradev", "quickmd").
-            map(|pd| pd.config_dir().join("quickmd.json"))?;
-
-        let config_file = File::open(config_path).map_err(|_| {
-            debug!("Didn't find config file.");
+        let yaml_path = Self::yaml_path();
+        let config_file = File::open(&yaml_path).map_err(|_| {
+            debug!("Didn't find config file: {}", yaml_path.display());
         }).ok()?;
 
-        serde_json::from_reader(&config_file).map_err(|e| {
-            error!("Couldn't parse JSON config file: {}", e);
+        serde_yaml::from_reader(&config_file).map_err(|e| {
+            error!("Couldn't parse YAML config file: {}", e);
         }).ok()
+    }
+
+    /// Gets the path to the default YAML config in the standard config location.
+    pub fn yaml_path() -> PathBuf {
+        ProjectDirs::from("com", "andrewradev", "quickmd").
+            map(|pd| pd.config_dir().join("config.yaml")).
+            unwrap_or_else(|| PathBuf::from("./quickmd.yaml"))
+    }
+
+    /// Gets the path to the custom CSS config in the standard config location.
+    pub fn css_path() -> PathBuf {
+        ProjectDirs::from("com", "andrewradev", "quickmd").
+            map(|pd| pd.config_dir().join("custom.css")).
+            unwrap_or_else(|| PathBuf::from("./quickmd.css"))
     }
 }
 
