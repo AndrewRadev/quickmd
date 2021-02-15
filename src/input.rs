@@ -188,9 +188,6 @@ impl InputFile {
 
     /// Only true if the struct represents an actual file.
     pub fn is_real_file(&self) -> bool {
-        match self {
-            Self::Filesystem(_) => true,
-            _                   => false,
-        }
+        matches!(self, Self::Filesystem(_))
     }
 }

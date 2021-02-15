@@ -67,7 +67,7 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
 
         // Watch the parent directory so we can catch recreated files
         let main_watch_path = renderer.canonical_md_path.parent().
-            unwrap_or_else(|| &renderer.canonical_md_path).
+            unwrap_or(&renderer.canonical_md_path).
             to_owned();
 
         if let Err(e) = watcher.watch(&main_watch_path, RecursiveMode::NonRecursive) {
