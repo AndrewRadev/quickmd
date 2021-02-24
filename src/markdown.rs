@@ -5,7 +5,7 @@
 
 use std::fs;
 use std::io;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::collections::HashSet;
 use pulldown_cmark::{Parser, Options, Event, html};
 
@@ -33,6 +33,7 @@ impl Renderer {
     ///
     pub fn run(&self) -> Result<RenderedContent, io::Error> {
         let markdown = fs::read_to_string(&self.canonical_md_path)?;
+        let root_dir = self.canonical_md_path.parent().unwrap_or_else(|| Path::new(""));
 
         let mut options = Options::empty();
         options.insert(Options::ENABLE_TABLES);
@@ -42,13 +43,19 @@ impl Renderer {
         let parser = Parser::new_ext(&markdown, options);
 
         let mut languages = HashSet::new();
-        let parser = parser.map(|event| {
+        let parser = parser.map(|mut event| {
             use pulldown_cmark::{Tag, CodeBlockKind};
 
-            if let Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(content))) = &event {
-                if content.len() > 0 {
-                    languages.insert(content.to_string());
-                }
+            match &mut event {
+                Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(content))) => {
+                    if content.len() > 0 {
+                        languages.insert(content.to_string());
+                    }
+                },
+                Event::Start(Tag::Image(_, url, _)) if url.starts_with("./") => {
+                    *url = format!("file://{}/{}", root_dir.display(), &url[2..]).into();
+                },
+                _ => (),
             }
 
             event
