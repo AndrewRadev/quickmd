@@ -34,27 +34,45 @@ Running the app is as simple as:
 quickmd <markdown-file>
 ```
 
-Pressing escape will close the window. Running it with `--help` should provide more info on the available options:
+Pressing escape will close the window. Running it with `--help` should provide more info on the available options. Here's how the output looks for me:
 
 ```
-quickmd 0.3.0
-A simple markdown previewer.
+quickmd 0.3.1
+A simple self-contained markdown previewer.
+
+Code highlighting via highlight.js version 9.18.1
+
+Edit configuration in: /home/andrew/.config/quickmd/config.yaml
+Add custom CSS in:     /home/andrew/.config/quickmd/custom.css
 
 USAGE:
-    quickmd [FLAGS] [OPTIONS] <input-file.md>
+    quickmd [FLAGS] [OPTIONS] [input-file.md]
 
 FLAGS:
-    -d, --debug       Activates debug logging
-    -h, --help        Prints help information
-    -V, --version     Prints version information
-        --no-watch    Disables watching file for changes
+    -d, --debug
+            Activates debug logging
+
+    -h, --help
+            Prints help information
+
+        --install-default-config
+            Creates a configuration file for later editing if one doesn't exist. Exits when done
+
+    -V, --version
+            Prints version information
+
+        --no-watch
+            Disables watching file for changes
+
 
 OPTIONS:
-        --output <directory>    Builds output HTML and other assets in the given directory instead of in a tempdir. Will
-                                be created if it doesn't exist. Not deleted on application exit
+        --output <directory>
+            Builds output HTML and other assets in the given directory instead of in a tempdir. Will be created if it
+            doesn't exist. Not deleted on application exit
 
 ARGS:
-    <input-file.md>    Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
+    <input-file.md>
+            Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
 ```
 
 ## Features
@@ -69,9 +87,10 @@ ARGS:
 
 ## Configuration
 
-You can change the CSS of the preview HTML by writing CSS in one of these files:
+You can change the CSS of the preview HTML by writing a file named "custom.css" in the application's config directory. On a linux machine, it would be: `~/.config/quickmd/`.
 
-- `~/.quickmd.css`
-- `~/.config/quickmd.css`
+You can also change some configuration options in a config file. Run `quickmd` with `--install-default-config` to create that file with all the defaults and comments.
 
-The built-in CSS that is used is stored in [/res/style](./res/style).
+Run `--help` to know where the config files will be located on your system.
+
+The built-in CSS that is used is stored in [/res/style](./res/style) and the default config is in [/res/default_config.yaml](./res/default_config.yaml)

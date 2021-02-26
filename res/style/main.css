@@ -1,7 +1,27 @@
 main {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  font-weight: 400;
-
   width: 66%;
   margin: 0 auto;
+}
+
+#link-preview {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 5px 10px;
+  background-color: #f5f6f7;
+  border-radius: 5px 0 0 0;
+  border-top: 1px solid #dcdfe3;
+  border-left: 1px solid #dcdfe3;
+  font-size: 0.7em;
+  opacity: 0;
+}
+
+#link-preview.visible {
+  opacity: 0.95;
+  transition: 300ms ease-out;
+}
+
+#link-preview.hidden {
+  opacity: 0;
+  transition: 300ms ease-out;
 }
