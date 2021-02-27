@@ -16,7 +16,7 @@ _Note: I have no idea if I'm allowed to use Github's stylesheet. The relevant fi
 
 You'll need to have Rust and the `cargo` tool. The easiest way to get that done is through [rustup.rs](https://rustup.rs/).
 
-You'll also need the GTK+, GLib and webkit2gtk development files to be installed on your system. The Gtk-rs [requirements page](http://gtk-rs.org/docs/requirements.html) should be a good guide.
+You'll also need the GTK+, GLib and webkit2gtk development files to be installed on your system. The Gtk-rs [installation page](https://www.gtk.org/docs/installations/) should be a good guide.
 
 After that, you can build and install the app from `crates.io` using:
 
