@@ -146,7 +146,7 @@ impl App {
 
             match (keystate, keyval) {
                 // Scroll with j/k, J/K:
-                (_, keys::constants::j) => execute_javascript(&webview, "window.foobar(0, 70)"),
+                (_, keys::constants::j) => execute_javascript(&webview, "window.scrollBy(0, 70)"),
                 (_, keys::constants::J) => execute_javascript(&webview, "window.scrollBy(0, 250)"),
                 (_, keys::constants::k) => execute_javascript(&webview, "window.scrollBy(0, -70)"),
                 (_, keys::constants::K) => execute_javascript(&webview, "window.scrollBy(0, -250)"),
