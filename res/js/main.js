@@ -72,7 +72,7 @@ document.querySelectorAll('a').forEach(function(link) {
       document.execCommand('copy');
       document.body.removeChild(tempInput);
 
-      linkPreview.innerHTML = "Copied to clipboard!";
+      linkPreview.innerHTML = "<strong>Copied to clipboard!</strong>";
     });
   }
 
