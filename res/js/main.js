@@ -46,9 +46,38 @@ document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function(heading) {
 
 // Show link preview at the bottom:
 let linkPreview = document.querySelector('#link-preview');
+let rootUrl = window.location.href;
+
 document.querySelectorAll('a').forEach(function(link) {
+  let url = link.href;
+  let description;
+
+  if (url.startsWith(rootUrl)) {
+    // it's a local anchor, let's just take that part
+    description = `<strong>Jump</strong>: ${url.replace(rootUrl, '')}`
+  } else {
+    // it's an external URL, copy it
+    description = `<strong>Copy</strong>: ${url}`
+
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      // Create a temporary text input whose contents we can "select" and copy using `execCommand`.
+      let tempInput = document.createElement('input');
+      tempInput.setAttribute('type', 'text');
+      tempInput.setAttribute('value', url);
+      document.body.insertBefore(tempInput, linkPreview);
+
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+
+      linkPreview.innerHTML = "Copied to clipboard!";
+    });
+  }
+
   link.addEventListener('mouseenter', function() {
-    linkPreview.innerHTML = link.href;
+    linkPreview.innerHTML = description;
     linkPreview.classList.remove('hidden');
     linkPreview.classList.add('visible');
   });
