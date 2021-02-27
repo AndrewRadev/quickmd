@@ -1,7 +1,7 @@
 //! The GTK user interface.
 
-use std::path::PathBuf;
-use std::ffi::OsStr;
+use std::path::{PathBuf, Path};
+use std::process::Command;
 
 use anyhow::anyhow;
 use gdk::keys;
@@ -24,6 +24,7 @@ pub struct App {
     webview: WebView,
     assets: Assets,
     filename: PathBuf,
+    config: Config,
 }
 
 impl App {
@@ -34,7 +35,7 @@ impl App {
     ///
     /// Initialization could fail due to a `WebContext` failure.
     ///
-    pub fn init(config: &Config, input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
+    pub fn init(config: Config, input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
         let window = Window::new(WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -51,7 +52,7 @@ impl App {
 
         window.add(&webview);
 
-        Ok(App { window, webview, assets, filename: input_file.path().to_path_buf() })
+        Ok(App { window, webview, assets, config, filename: input_file.path().to_path_buf() })
     }
 
     /// Start listening to events from the `ui_receiver` and trigger the relevant methods on the
@@ -107,10 +108,11 @@ impl App {
     }
 
     fn connect_events(&self) {
-        let filename = self.filename.clone();
+        let filename       = self.filename.clone();
+        let editor_command = self.config.editor_command.clone();
 
-        // Each key press will invoke this function.
-        self.window.connect_key_press_event(move |_window, event| {
+        // Each key release will invoke this function.
+        self.window.connect_key_release_event(move |_window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
 
@@ -119,10 +121,15 @@ impl App {
                 (_, keys::constants::Escape) =>  {
                     gtk::main_quit()
                 },
-                // Ctrl + e:
-                (gdk::ModifierType::CONTROL_MASK, keys::constants::e) => {
-                    debug!("Got CTRL+E, exec-ing into an editor");
-                    exec_editor(filename.as_os_str());
+                // e:
+                (_, keys::constants::e) => {
+                    debug!("Launching an editor");
+                    launch_editor(&editor_command, &filename);
+                },
+                // E:
+                (_, keys::constants::E) => {
+                    debug!("Exec-ing into an editor");
+                    exec_editor(&editor_command, &filename);
                 },
                 _ => (),
             }
@@ -172,18 +179,44 @@ pub enum Event {
 }
 
 #[cfg(target_family="unix")]
-fn exec_editor(filename_string: &OsStr) {
-    gtk::main_quit();
+fn exec_editor(editor_command: &Vec<String>, file_path: &Path) {
+    if let Some(mut editor) = build_editor(editor_command, file_path) {
+        gtk::main_quit();
 
-    use std::process::Command;
-    use std::os::unix::process::CommandExt;
+        use std::os::unix::process::CommandExt;
 
-    Command::new("gvim").
-        args(&[filename_string]).
-        exec();
+        editor.exec();
+    }
 }
 
 #[cfg(not(target_family="unix"))]
-fn exec_editor(_filename_string: &OsStr) {
+fn exec_editor(_editor_command: &Vec<String>, _filename_string: &Path) {
     warn!("Not on a UNIX system, can't exec to a text editor");
+}
+
+fn launch_editor(editor_command: &Vec<String>, file_path: &Path) {
+    if let Some(mut editor) = build_editor(editor_command, file_path) {
+        if let Err(e) = editor.spawn() {
+            warn!("Couldn't launch editor ({:?}): {}", editor_command.as_slice(), e);
+        }
+    }
+}
+
+fn build_editor(editor_command: &Vec<String>, file_path: &Path) -> Option<Command> {
+    let executable = editor_command.get(0).or_else(|| {
+        warn!("No \"editor\" defined in the config ({})", Config::yaml_path().display());
+        None
+    })?;
+
+    let mut command = Command::new(executable);
+
+    for arg in editor_command.iter().skip(1) {
+        if arg == "{path}" {
+            command.arg(file_path);
+        } else {
+            command.arg(arg);
+        }
+    }
+
+    Some(command)
 }

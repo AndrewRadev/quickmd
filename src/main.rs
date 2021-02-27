@@ -50,7 +50,7 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
     let renderer = Renderer::new(md_path.to_path_buf());
     let assets = Assets::init(options.output_dir.clone())?;
 
-    let mut ui = ui::App::init(config, input_file.clone(), assets)?;
+    let mut ui = ui::App::init(config.clone(), input_file.clone(), assets)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 

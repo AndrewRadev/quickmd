@@ -5,3 +5,14 @@
 # scrolling up or down.
 #
 zoom: 1.0
+
+# The command-line components to launch an editor with the "e" key (or exec into one with "E"). The
+# `{path}` placeholder will be replaced with the full path to the current markdown file.
+#
+# Other examples for editor command-lines:
+#
+#   - ["code", "{path}"]
+#   - ["gnome-terminal", "--", "vim", "{path}"]
+#   - ["alacritty", "-e", "vim", "{path}"]
+#
+editor_command: ["gvim", "{path}"]

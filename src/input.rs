@@ -98,11 +98,16 @@ pub struct Config {
     /// higher value.
     ///
     pub zoom: f64,
+
+    /// The external editor to launch when editing is requested. It defaults to an empty vector,
+    /// which will produce a command-line warning when it's attempted.
+    ///
+    pub editor_command: Vec<String>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self { zoom: 1.0 }
+        Self { zoom: 1.0, editor_command: Vec::new() }
     }
 }
 
