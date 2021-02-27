@@ -2,9 +2,11 @@
 
 use std::path::{PathBuf, Path};
 use std::process::Command;
+use std::time::Instant;
 
 use anyhow::anyhow;
 use gdk::keys;
+use gio::Cancellable;
 use gtk::prelude::*;
 use gtk::{Window, WindowType};
 use log::{debug, warn};
@@ -111,7 +113,7 @@ impl App {
         let filename       = self.filename.clone();
         let editor_command = self.config.editor_command.clone();
 
-        // Each key release will invoke this function.
+        // Key releases mapped to one-time events:
         self.window.connect_key_release_event(move |_window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
@@ -130,6 +132,28 @@ impl App {
                 (_, keys::constants::E) => {
                     debug!("Exec-ing into an editor");
                     exec_editor(&editor_command, &filename);
+                },
+                _ => (),
+            }
+            Inhibit(false)
+        });
+
+        // Key presses mapped to repeatable events:
+        let webview = self.webview.clone();
+        self.window.connect_key_press_event(move |_window, event| {
+            let keyval   = event.get_keyval();
+            let keystate = event.get_state();
+
+            match (keystate, keyval) {
+                // Scroll with j/k, J/K:
+                (_, keys::constants::j) => execute_javascript(&webview, "window.foobar(0, 70)"),
+                (_, keys::constants::J) => execute_javascript(&webview, "window.scrollBy(0, 250)"),
+                (_, keys::constants::k) => execute_javascript(&webview, "window.scrollBy(0, -70)"),
+                (_, keys::constants::K) => execute_javascript(&webview, "window.scrollBy(0, -250)"),
+                // Jump to the top/bottom with g/G
+                (_, keys::constants::g) => execute_javascript(&webview, "window.scroll({top: 0})"),
+                (_, keys::constants::G) => {
+                    execute_javascript(&webview, "window.scroll({top: document.body.scrollHeight})")
                 },
                 _ => (),
             }
@@ -219,4 +243,16 @@ fn build_editor(editor_command: &Vec<String>, file_path: &Path) -> Option<Comman
     }
 
     Some(command)
+}
+
+fn execute_javascript(webview: &WebView, js_code: &'static str) {
+    let now = Instant::now();
+
+    webview.run_javascript(js_code, None::<&Cancellable>, move |result| {
+        if let Err(e) = result {
+            warn!("Javascript execution error: {}", e);
+        } else {
+            debug!("Javascript executed in {}ms:\n> {}", now.elapsed().as_millis(), js_code);
+        }
+    });
 }
