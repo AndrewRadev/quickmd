@@ -204,7 +204,7 @@ pub enum Event {
 
 #[cfg(target_family="unix")]
 fn exec_editor(editor_command: &Vec<String>, file_path: &Path) {
-    if let Some(mut editor) = build_editor(editor_command, file_path) {
+    if let Some(mut editor) = build_editor_command(editor_command, file_path) {
         gtk::main_quit();
 
         use std::os::unix::process::CommandExt;
@@ -219,14 +219,14 @@ fn exec_editor(_editor_command: &Vec<String>, _filename_string: &Path) {
 }
 
 fn launch_editor(editor_command: &Vec<String>, file_path: &Path) {
-    if let Some(mut editor) = build_editor(editor_command, file_path) {
+    if let Some(mut editor) = build_editor_command(editor_command, file_path) {
         if let Err(e) = editor.spawn() {
             warn!("Couldn't launch editor ({:?}): {}", editor_command.as_slice(), e);
         }
     }
 }
 
-fn build_editor(editor_command: &Vec<String>, file_path: &Path) -> Option<Command> {
+fn build_editor_command(editor_command: &Vec<String>, file_path: &Path) -> Option<Command> {
     let executable = editor_command.get(0).or_else(|| {
         warn!("No \"editor\" defined in the config ({})", Config::yaml_path().display());
         None
