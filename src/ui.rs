@@ -136,13 +136,13 @@ impl App {
         });
 
         // Key releases mapped to one-time events:
-        self.window.connect_key_release_event(move |_window, event| {
+        self.window.connect_key_release_event(move |window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
 
             match (keystate, keyval) {
-                // Escape:
-                (_, keys::constants::Escape) =>  {
+                // Ctrl+Q
+                (gdk::ModifierType::CONTROL_MASK, keys::constants::q) => {
                     gtk::main_quit()
                 },
                 // e:
@@ -154,6 +154,10 @@ impl App {
                 (_, keys::constants::E) => {
                     debug!("Exec-ing into an editor");
                     exec_editor(&editor_command, &filename);
+                },
+                // F1
+                (_, keys::constants::F1) => {
+                    build_help_dialog(&window).run();
                 },
                 _ => (),
             }
@@ -255,4 +259,27 @@ fn execute_javascript(webview: &WebView, js_code: &'static str) {
             debug!("Javascript executed in {}ms:\n> {}", now.elapsed().as_millis(), js_code);
         }
     });
+}
+
+fn build_help_dialog(window: &gtk::Window) -> gtk::MessageDialog {
+    use gtk::{DialogFlags, MessageType, ButtonsType};
+
+    let dialog = gtk::MessageDialog::new(
+        Some(window),
+        DialogFlags::MODAL | DialogFlags::DESTROY_WITH_PARENT,
+        MessageType::Info,
+        ButtonsType::Close,
+        ""
+    );
+
+    let content = format!{
+        include_str!("../res/help_popup.html"),
+        yaml_path = Config::yaml_path().display(),
+        css_path = Config::css_path().display(),
+    };
+
+    dialog.set_markup(&content);
+    dialog.connect_response(|d, _response| d.close());
+
+    dialog
 }
