@@ -110,8 +110,9 @@ impl App {
     }
 
     fn connect_events(&self) {
-        let filename       = self.filename.clone();
-        let editor_command = self.config.editor_command.clone();
+        let filename        = self.filename.clone();
+        let editor_command  = self.config.editor_command.clone();
+        let base_zoom_level = self.config.zoom;
 
         // Key presses mapped to repeatable events:
         let webview = self.webview.clone();
@@ -136,6 +137,7 @@ impl App {
         });
 
         // Key releases mapped to one-time events:
+        let webview = self.webview.clone();
         self.window.connect_key_release_event(move |window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
@@ -143,7 +145,7 @@ impl App {
             match (keystate, keyval) {
                 // Ctrl+Q
                 (gdk::ModifierType::CONTROL_MASK, keys::constants::q) => {
-                    gtk::main_quit()
+                    gtk::main_quit();
                 },
                 // e:
                 (_, keys::constants::e) => {
@@ -154,6 +156,23 @@ impl App {
                 (_, keys::constants::E) => {
                     debug!("Exec-ing into an editor");
                     exec_editor(&editor_command, &filename);
+                },
+                // +/-/=:
+                (_, keys::constants::plus) => {
+                    let zoom_level = webview.get_zoom_level();
+                    webview.set_zoom_level(zoom_level + 0.1);
+                    debug!("Zoom level set to: {}", zoom_level);
+                },
+                (_, keys::constants::minus) => {
+                    let zoom_level = webview.get_zoom_level();
+                    if zoom_level > 0.2 {
+                        webview.set_zoom_level(zoom_level - 0.1);
+                        debug!("Zoom level set to: {}", zoom_level);
+                    }
+                },
+                (_, keys::constants::equal) => {
+                    webview.set_zoom_level(base_zoom_level);
+                    debug!("Zoom level set to: {}", base_zoom_level);
                 },
                 // F1
                 (_, keys::constants::F1) => {
