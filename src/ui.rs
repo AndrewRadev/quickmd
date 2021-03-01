@@ -8,7 +8,6 @@ use anyhow::anyhow;
 use gdk::keys;
 use gio::Cancellable;
 use gtk::prelude::*;
-use gtk::{Window, WindowType};
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
 use webkit2gtk::{WebContext, WebView, WebViewExt};
@@ -22,8 +21,8 @@ use crate::markdown::RenderedContent;
 ///
 #[derive(Clone)]
 pub struct App {
-    window: Window,
-    webview: WebView,
+    window: gtk::Window,
+    browser: Browser,
     assets: Assets,
     filename: PathBuf,
     config: Config,
@@ -38,7 +37,7 @@ impl App {
     /// Initialization could fail due to a `WebContext` failure.
     ///
     pub fn init(config: Config, input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
-        let window = Window::new(WindowType::Toplevel);
+        let window = gtk::Window::new(gtk::WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
         let title = match &input_file {
@@ -47,14 +46,10 @@ impl App {
         };
         window.set_title(&title);
 
-        let web_context = WebContext::get_default().
-            ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
-        let webview = WebView::with_context(&web_context);
-        webview.set_zoom_level(config.zoom);
+        let browser = Browser::new(config.clone())?;
+        window.add(&browser.webview);
 
-        window.add(&webview);
-
-        Ok(App { window, webview, assets, config, filename: input_file.path().to_path_buf() })
+        Ok(App { window, browser, assets, config, filename: input_file.path().to_path_buf() })
     }
 
     /// Start listening to events from the `ui_receiver` and trigger the relevant methods on the
@@ -87,49 +82,40 @@ impl App {
     }
 
     fn load_content(&mut self, content: &RenderedContent) -> anyhow::Result<()> {
-        let page_state = match self.webview.get_title() {
-            Some(t) => {
-                serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
-                    warn!("Failed to get page state from {}: {:?}", t, e);
-                    PageState::default()
-                })
-            },
-            None => PageState::default(),
-        };
+        let page_state = self.browser.get_page_state();
         let output_path = self.assets.build(content, &page_state)?;
 
         debug!("Loading HTML:");
         debug!(" > output_path = {}", output_path.display());
 
-        self.webview.load_uri(&format!("file://{}", output_path.display()));
+        self.browser.load_uri(&format!("file://{}", output_path.display()));
         Ok(())
     }
 
     fn reload(&self) {
-        self.webview.reload();
+        self.browser.reload();
     }
 
     fn connect_events(&self) {
         let filename        = self.filename.clone();
         let editor_command  = self.config.editor_command.clone();
-        let base_zoom_level = self.config.zoom;
 
         // Key presses mapped to repeatable events:
-        let webview = self.webview.clone();
+        let browser = self.browser.clone();
         self.window.connect_key_press_event(move |_window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
 
             match (keystate, keyval) {
                 // Scroll with j/k, J/K:
-                (_, keys::constants::j) => execute_javascript(&webview, "window.scrollBy(0, 70)"),
-                (_, keys::constants::J) => execute_javascript(&webview, "window.scrollBy(0, 250)"),
-                (_, keys::constants::k) => execute_javascript(&webview, "window.scrollBy(0, -70)"),
-                (_, keys::constants::K) => execute_javascript(&webview, "window.scrollBy(0, -250)"),
+                (_, keys::constants::j) => browser.execute_js("window.scrollBy(0, 70)"),
+                (_, keys::constants::J) => browser.execute_js("window.scrollBy(0, 250)"),
+                (_, keys::constants::k) => browser.execute_js("window.scrollBy(0, -70)"),
+                (_, keys::constants::K) => browser.execute_js("window.scrollBy(0, -250)"),
                 // Jump to the top/bottom with g/G
-                (_, keys::constants::g) => execute_javascript(&webview, "window.scroll({top: 0})"),
+                (_, keys::constants::g) => browser.execute_js("window.scroll({top: 0})"),
                 (_, keys::constants::G) => {
-                    execute_javascript(&webview, "window.scroll({top: document.body.scrollHeight})")
+                    browser.execute_js("window.scroll({top: document.body.scrollHeight})")
                 },
                 _ => (),
             }
@@ -137,7 +123,7 @@ impl App {
         });
 
         // Key releases mapped to one-time events:
-        let webview = self.webview.clone();
+        let browser = self.browser.clone();
         self.window.connect_key_release_event(move |window, event| {
             let keyval   = event.get_keyval();
             let keystate = event.get_state();
@@ -158,22 +144,9 @@ impl App {
                     exec_editor(&editor_command, &filename);
                 },
                 // +/-/=:
-                (_, keys::constants::plus) => {
-                    let zoom_level = webview.get_zoom_level();
-                    webview.set_zoom_level(zoom_level + 0.1);
-                    debug!("Zoom level set to: {}", zoom_level);
-                },
-                (_, keys::constants::minus) => {
-                    let zoom_level = webview.get_zoom_level();
-                    if zoom_level > 0.2 {
-                        webview.set_zoom_level(zoom_level - 0.1);
-                        debug!("Zoom level set to: {}", zoom_level);
-                    }
-                },
-                (_, keys::constants::equal) => {
-                    webview.set_zoom_level(base_zoom_level);
-                    debug!("Zoom level set to: {}", base_zoom_level);
-                },
+                (_, keys::constants::plus)  => browser.zoom_in(),
+                (_, keys::constants::minus) => browser.zoom_out(),
+                (_, keys::constants::equal) => browser.zoom_reset(),
                 // F1
                 (_, keys::constants::F1) => {
                     build_help_dialog(&window).run();
@@ -184,22 +157,12 @@ impl App {
         });
 
         // On Ctrl+Scroll, zoom:
-        let webview = self.webview.clone();
+        let browser = self.browser.clone();
         self.window.connect_scroll_event(move |_window, event| {
             if event.get_state().contains(gdk::ModifierType::CONTROL_MASK) {
-                let zoom_level = webview.get_zoom_level();
-
                 match event.get_direction() {
-                    gdk::ScrollDirection::Up => {
-                        webview.set_zoom_level(zoom_level + 0.1);
-                        debug!("Zoom level set to: {}", zoom_level);
-                    },
-                    gdk::ScrollDirection::Down => {
-                        if zoom_level > 0.2 {
-                            webview.set_zoom_level(zoom_level - 0.1);
-                            debug!("Zoom level set to: {}", zoom_level);
-                        }
-                    },
+                    gdk::ScrollDirection::Up   => browser.zoom_in(),
+                    gdk::ScrollDirection::Down => browser.zoom_out(),
                     _ => (),
                 }
             }
@@ -223,6 +186,93 @@ pub enum Event {
 
     /// Refresh the webview.
     Reload,
+}
+
+/// A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+///
+#[derive(Clone)]
+pub struct Browser {
+    webview: WebView,
+    config: Config,
+}
+
+impl Browser {
+    /// Construct a new instance with the provided `Config`.
+    ///
+    pub fn new(config: Config) -> anyhow::Result<Self> {
+        let web_context = WebContext::get_default().
+            ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
+        let webview = WebView::with_context(&web_context);
+        webview.set_zoom_level(config.zoom);
+
+        Ok(Browser { webview, config })
+    }
+
+    /// Delegates to `webkit2gtk::WebView`
+    pub fn load_uri(&self, uri: &str) {
+        self.webview.load_uri(uri);
+    }
+
+    /// Delegates to `webkit2gtk::WebView`
+    pub fn reload(&self) {
+        self.webview.reload();
+    }
+
+    /// Increase zoom level by ~10%
+    ///
+    pub fn zoom_in(&self) {
+        let zoom_level = self.webview.get_zoom_level();
+        self.webview.set_zoom_level(zoom_level + 0.1);
+        debug!("Zoom level set to: {}", zoom_level);
+    }
+
+    /// Decrease zoom level by ~10%, down till 20% or so.
+    ///
+    pub fn zoom_out(&self) {
+        let zoom_level = self.webview.get_zoom_level();
+
+        if zoom_level > 0.2 {
+            self.webview.set_zoom_level(zoom_level - 0.1);
+            debug!("Zoom level set to: {}", zoom_level);
+        }
+    }
+
+    /// Reset to the base zoom level defined in the config (which defaults to 100%).
+    ///
+    pub fn zoom_reset(&self) {
+        self.webview.set_zoom_level(self.config.zoom);
+        debug!("Zoom level set to: {}", self.config.zoom);
+    }
+
+    /// Get the deserialized `PageState` from the current contents of the webview. This is later
+    /// rendered unchanged into the HTML content.
+    ///
+    pub fn get_page_state(&self) -> PageState {
+        match self.webview.get_title() {
+            Some(t) => {
+                serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
+                    warn!("Failed to get page state from {}: {:?}", t, e);
+                    PageState::default()
+                })
+            },
+            None => PageState::default(),
+        }
+    }
+
+    /// Execute some (async) javascript code in the webview, without checking the result other than
+    /// printing a warning if it errors out.
+    ///
+    pub fn execute_js(&self, js_code: &'static str) {
+        let now = Instant::now();
+
+        self.webview.run_javascript(js_code, None::<&Cancellable>, move |result| {
+            if let Err(e) = result {
+                warn!("Javascript execution error: {}", e);
+            } else {
+                debug!("Javascript executed in {}ms:\n> {}", now.elapsed().as_millis(), js_code);
+            }
+        });
+    }
 }
 
 #[cfg(target_family="unix")]
@@ -266,18 +316,6 @@ fn build_editor_command(editor_command: &Vec<String>, file_path: &Path) -> Optio
     }
 
     Some(command)
-}
-
-fn execute_javascript(webview: &WebView, js_code: &'static str) {
-    let now = Instant::now();
-
-    webview.run_javascript(js_code, None::<&Cancellable>, move |result| {
-        if let Err(e) = result {
-            warn!("Javascript execution error: {}", e);
-        } else {
-            debug!("Javascript executed in {}ms:\n> {}", now.elapsed().as_millis(), js_code);
-        }
-    });
 }
 
 fn build_help_dialog(window: &gtk::Window) -> gtk::MessageDialog {
