@@ -6,7 +6,7 @@
 
 This project is a simple tool that solves a simple problem: I'd like to preview markdown files as they'll show up on Github, so I don't have to push my READMEs before I can tell whether they're formatted well enough. It ends up looking like this:
 
-![Screenshot](http://i.andrewradev.com/d32c593abdfd03881de3358251596bdd.png)
+![Demo](http://i.andrewradev.com/ad155fa1a15f27beeb13b74d277212e4.gif)
 
 It's a Rust app that launches a GtkWebkit window that renders the compiled HTML of the given markdown file. It monitors this file for any changes and reloads. It uses a stylesheet that's literally copied off Github's markdown stylesheet.
 
@@ -85,12 +85,14 @@ ARGS:
 
 - Ability to render STDIN, which allows partial rendering of target markdown. Try putting [this bit of Vimscript](https://github.com/AndrewRadev/Vimfiles/blob/f9e0c08dd280d13acb625d3370da399c39e14403/ftplugin/markdown.vim#L11-L15) in your `~/.vim/ftplugin/markdown.vim`, select a few lines and press `!`.
 
+- Scroll with Vi-like keybindings, Press `e` to spawn an editor, if configured.
+
 ## Configuration
 
 You can change the CSS of the preview HTML by writing a file named "custom.css" in the application's config directory. On a linux machine, it would be: `~/.config/quickmd/`.
 
 You can also change some configuration options in a config file. Run `quickmd` with `--install-default-config` to create that file with all the defaults and comments.
 
-Run `--help` to know where the config files will be located on your system.
+Run `--help` to see where the config files will be located on your system, or press `F1` in the interface.
 
 The built-in CSS that is used is stored in [/res/style](./res/style) and the default config is in [/res/default_config.yaml](./res/default_config.yaml)
