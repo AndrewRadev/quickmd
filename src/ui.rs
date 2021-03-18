@@ -276,7 +276,7 @@ impl Browser {
 }
 
 #[cfg(target_family="unix")]
-fn exec_editor(editor_command: &Vec<String>, file_path: &Path) {
+fn exec_editor(editor_command: &[String], file_path: &Path) {
     if let Some(mut editor) = build_editor_command(editor_command, file_path) {
         gtk::main_quit();
 
@@ -287,19 +287,19 @@ fn exec_editor(editor_command: &Vec<String>, file_path: &Path) {
 }
 
 #[cfg(not(target_family="unix"))]
-fn exec_editor(_editor_command: &Vec<String>, _filename_string: &Path) {
+fn exec_editor(_editor_command: &[String], _filename_string: &Path) {
     warn!("Not on a UNIX system, can't exec to a text editor");
 }
 
-fn launch_editor(editor_command: &Vec<String>, file_path: &Path) {
+fn launch_editor(editor_command: &[String], file_path: &Path) {
     if let Some(mut editor) = build_editor_command(editor_command, file_path) {
         if let Err(e) = editor.spawn() {
-            warn!("Couldn't launch editor ({:?}): {}", editor_command.as_slice(), e);
+            warn!("Couldn't launch editor ({:?}): {}", editor_command, e);
         }
     }
 }
 
-fn build_editor_command(editor_command: &Vec<String>, file_path: &Path) -> Option<Command> {
+fn build_editor_command(editor_command: &[String], file_path: &Path) -> Option<Command> {
     let executable = editor_command.get(0).or_else(|| {
         warn!("No \"editor\" defined in the config ({})", Config::yaml_path().display());
         None
