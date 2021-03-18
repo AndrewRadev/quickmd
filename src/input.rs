@@ -150,6 +150,7 @@ impl Config {
             Err(anyhow!("An existing file was found at: {}\n\
                     If you want to replace it, please delete it first", yaml_path.display()))
         } else {
+            yaml_path.parent().map(std::fs::create_dir_all);
             Ok(std::fs::write(yaml_path, include_str!("../res/default_config.yaml"))?)
         }
     }
