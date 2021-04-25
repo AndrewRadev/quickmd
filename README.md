@@ -1,3 +1,5 @@
+<img src="http://i.andrewradev.com/d3a00907171ff14e51814fedcf4c03a4.png" width=300 />
+
 [![Crate](https://img.shields.io/crates/v/quickmd)](https://crates.io/crates/quickmd)
 [![Documentation](https://docs.rs/quickmd/badge.svg)](https://docs.rs/quickmd)
 [![Maintenance status](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)](https://crates.io/crates/quickmd)
