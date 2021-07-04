@@ -1,5 +1,6 @@
 use std::io;
 use std::process;
+use std::path::{Path, PathBuf};
 
 use anyhow::anyhow;
 use log::debug;
@@ -32,10 +33,23 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
         return Config::try_install_default();
     }
 
-    let input_file = options.input_file.as_ref().ok_or_else(|| {
-        anyhow!("Please provide a markdown file to render or - to read from STDIN")
-    })?;
+    gtk::init()?;
 
+    if let Some(input_file) = options.input_file.as_ref() {
+        launch_app(input_file, options, config)
+    } else {
+        let input_file = launch_file_picker()?;
+        launch_app(&input_file, options, config)
+    }
+}
+
+fn launch_file_picker() -> anyhow::Result<PathBuf> {
+    ui::FilePicker::new().run().ok_or_else(|| {
+        anyhow!("Please provide a markdown file to render or call the program with - to read from STDIN")
+    })
+}
+
+fn launch_app(input_file: &Path, options: &Options, config: &Config) -> anyhow::Result<()> {
     let input_file   = InputFile::from(&input_file, io::stdin())?;
     let is_real_file = input_file.is_real_file();
     let md_path      = input_file.path();
@@ -44,8 +58,6 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
         let error = anyhow!("File not found: {}", md_path.display());
         return Err(error);
     }
-
-    gtk::init()?;
 
     let renderer = Renderer::new(md_path.to_path_buf());
     let assets = Assets::init(options.output_dir.clone())?;
