@@ -303,8 +303,8 @@ impl FilePicker {
         dialog.add_filter(&filter);
 
         // Add the cancel and open buttons to that dialog.
-        dialog.add_button("Cancel", gtk::ResponseType::Cancel.into());
-        dialog.add_button("Open", gtk::ResponseType::Ok.into());
+        dialog.add_button("Cancel", gtk::ResponseType::Cancel);
+        dialog.add_button("Open", gtk::ResponseType::Ok);
 
         FilePicker(dialog)
     }
@@ -312,7 +312,7 @@ impl FilePicker {
     /// Open the file picker popup and get the selected file.
     ///
     pub fn run(&self) -> Option<PathBuf> {
-        if self.0.run() == gtk::ResponseType::Ok.into() {
+        if self.0.run() == gtk::ResponseType::Ok {
             self.0.get_filename()
         } else {
             None
