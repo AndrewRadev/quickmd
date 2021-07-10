@@ -17,6 +17,9 @@ jobs:
           default: true
           override: true
 
+      - name: Install gtk and webkit2gtk
+        run: sudo apt update && sudo apt install libgtk-3-dev webkit2gtk
+
       - name: Build
         run: cargo build --all --release && strip target/release/quickmd && mv target/release/quickmd target/release/quickmd_amd64
 
