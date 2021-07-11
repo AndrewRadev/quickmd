@@ -24,7 +24,8 @@ pub struct Options {
     #[structopt(short, long)]
     pub debug: bool,
 
-    /// Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
+    /// Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch). If not
+    /// provided, the app will launch a file picker
     #[structopt(name = "input-file.md", parse(from_os_str))]
     pub input_file: Option<PathBuf>,
 

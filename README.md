@@ -16,9 +16,19 @@ _Note: I have no idea if I'm allowed to use Github's stylesheet. The relevant fi
 
 ## Installation
 
+### From a release binary
+
+You should be able to find a compiled 64-bit linux binary in every release since v0.4.1. You can put it in your `$PATH` and launch it, as long as you have GTK3 and Webkit2Gtk installed on your system. On Arch Linux, you can install these like so:
+
+``` .sh-session
+# pacman -S gtk3 webkit2gtk
+```
+
+### From source
+
 You'll need to have Rust and the `cargo` tool. The easiest way to get that done is through [rustup.rs](https://rustup.rs/).
 
-You'll also need the GTK+, GLib and webkit2gtk development files to be installed on your system. The Gtk-rs [installation page](https://www.gtk.org/docs/installations/) should be a good guide.
+You'll also need the GTK3 and Webkit2Gtk _development_ files to be installed on your system. The Gtk-rs [installation page](https://www.gtk.org/docs/installations/) might be a good start.
 
 After that, you can build and install the app from `crates.io` using:
 
@@ -39,7 +49,7 @@ quickmd <markdown-file>
 Pressing escape will close the window. Running it with `--help` should provide more info on the available options. Here's how the output looks for me:
 
 ```
-quickmd 0.3.1
+quickmd 0.4.2
 A simple self-contained markdown previewer.
 
 Code highlighting via highlight.js version 9.18.1
@@ -74,7 +84,8 @@ OPTIONS:
 
 ARGS:
     <input-file.md>
-            Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch)
+            Markdown file to render. Use "-" to read markdown from STDIN (implies --no-watch). If not provided, the app
+            will launch a file picker
 ```
 
 ## Features
