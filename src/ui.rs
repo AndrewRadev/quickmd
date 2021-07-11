@@ -40,6 +40,12 @@ impl App {
         let window = gtk::Window::new(gtk::WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
+        if let Ok(asset_path) = assets.output_path() {
+            if let Ok(icon) = gdk_pixbuf::Pixbuf::from_file(asset_path.join("icon.png")) {
+                window.set_icon(Some(&icon));
+            }
+        }
+
         let title = match &input_file {
             InputFile::Filesystem(p) => format!("{} - Quickmd", p.short_path().display()),
             InputFile::Stdin(_)      => String::from("Quickmd"),

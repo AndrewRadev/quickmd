@@ -22,9 +22,10 @@ use tempfile::{tempdir, TempDir};
 use crate::input::Config;
 use crate::markdown::RenderedContent;
 
-const MAIN_JS:    &str = include_str!("../res/js/main.js");
-const MAIN_CSS:   &str = include_str!("../res/style/main.css");
-const GITHUB_CSS: &str = include_str!("../res/style/github.css");
+const MAIN_JS:    &str  = include_str!("../res/js/main.js");
+const MAIN_CSS:   &str  = include_str!("../res/style/main.css");
+const GITHUB_CSS: &str  = include_str!("../res/style/github.css");
+const ICON_PNG:   &[u8] = include_bytes!("../res/icon.png");
 
 /// The version of highlight.js the app uses for code highlighting.
 ///
@@ -90,6 +91,8 @@ impl Assets {
         fs::write(output_path.join("main.css"), MAIN_CSS).
             unwrap_or_else(|e| warn!("{}", e));
         fs::write(output_path.join("github.css"), GITHUB_CSS).
+            unwrap_or_else(|e| warn!("{}", e));
+        fs::write(output_path.join("icon.png"), ICON_PNG).
             unwrap_or_else(|e| warn!("{}", e));
 
         Ok(assets)
