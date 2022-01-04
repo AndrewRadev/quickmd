@@ -10,7 +10,8 @@ use gio::Cancellable;
 use gtk::prelude::*;
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
-use webkit2gtk::{WebContext, WebView, WebViewExt};
+use webkit2gtk::{WebContext, WebView};
+use webkit2gtk::traits::WebViewExt;
 
 use crate::assets::{Assets, PageState};
 use crate::input::{InputFile, Config};
@@ -109,8 +110,8 @@ impl App {
         // Key presses mapped to repeatable events:
         let browser = self.browser.clone();
         self.window.connect_key_press_event(move |_window, event| {
-            let keyval   = event.get_keyval();
-            let keystate = event.get_state();
+            let keyval   = event.keyval();
+            let keystate = event.state();
 
             match (keystate, keyval) {
                 // Scroll with j/k, J/K:
@@ -131,8 +132,8 @@ impl App {
         // Key releases mapped to one-time events:
         let browser = self.browser.clone();
         self.window.connect_key_release_event(move |window, event| {
-            let keyval   = event.get_keyval();
-            let keystate = event.get_state();
+            let keyval   = event.keyval();
+            let keystate = event.state();
 
             match (keystate, keyval) {
                 // Ctrl+Q
@@ -155,7 +156,7 @@ impl App {
                 (_, keys::constants::equal) => browser.zoom_reset(),
                 // F1
                 (_, keys::constants::F1) => {
-                    build_help_dialog(&window).run();
+                    build_help_dialog(window).run();
                 },
                 _ => (),
             }
@@ -165,8 +166,8 @@ impl App {
         // On Ctrl+Scroll, zoom:
         let browser = self.browser.clone();
         self.window.connect_scroll_event(move |_window, event| {
-            if event.get_state().contains(gdk::ModifierType::CONTROL_MASK) {
-                match event.get_direction() {
+            if event.state().contains(gdk::ModifierType::CONTROL_MASK) {
+                match event.direction() {
                     gdk::ScrollDirection::Up   => browser.zoom_in(),
                     gdk::ScrollDirection::Down => browser.zoom_out(),
                     _ => (),
@@ -206,7 +207,7 @@ impl Browser {
     /// Construct a new instance with the provided `Config`.
     ///
     pub fn new(config: Config) -> anyhow::Result<Self> {
-        let web_context = WebContext::get_default().
+        let web_context = WebContext::default().
             ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
         let webview = WebView::with_context(&web_context);
         webview.set_zoom_level(config.zoom);
@@ -227,7 +228,7 @@ impl Browser {
     /// Increase zoom level by ~10%
     ///
     pub fn zoom_in(&self) {
-        let zoom_level = self.webview.get_zoom_level();
+        let zoom_level = self.webview.zoom_level();
         self.webview.set_zoom_level(zoom_level + 0.1);
         debug!("Zoom level set to: {}", zoom_level);
     }
@@ -235,7 +236,7 @@ impl Browser {
     /// Decrease zoom level by ~10%, down till 20% or so.
     ///
     pub fn zoom_out(&self) {
-        let zoom_level = self.webview.get_zoom_level();
+        let zoom_level = self.webview.zoom_level();
 
         if zoom_level > 0.2 {
             self.webview.set_zoom_level(zoom_level - 0.1);
@@ -254,7 +255,7 @@ impl Browser {
     /// rendered unchanged into the HTML content.
     ///
     pub fn get_page_state(&self) -> PageState {
-        match self.webview.get_title() {
+        match self.webview.title() {
             Some(t) => {
                 serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
                     warn!("Failed to get page state from {}: {:?}", t, e);
@@ -319,7 +320,7 @@ impl FilePicker {
     ///
     pub fn run(&self) -> Option<PathBuf> {
         if self.0.run() == gtk::ResponseType::Ok {
-            self.0.get_filename()
+            self.0.filename()
         } else {
             None
         }

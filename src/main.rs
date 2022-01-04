@@ -13,7 +13,7 @@ use quickmd::ui;
 
 fn main() {
     let config = Config::load().
-        unwrap_or_else(Config::default);
+        unwrap_or_default();
 
     let options = Options::build();
     options.init_logging();
@@ -50,7 +50,7 @@ fn launch_file_picker() -> anyhow::Result<PathBuf> {
 }
 
 fn launch_app(input_file: &Path, options: &Options, config: &Config) -> anyhow::Result<()> {
-    let input_file   = InputFile::from(&input_file, io::stdin())?;
+    let input_file   = InputFile::from(input_file, io::stdin())?;
     let is_real_file = input_file.is_real_file();
     let md_path      = input_file.path();
 

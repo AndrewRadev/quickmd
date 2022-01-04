@@ -2,7 +2,7 @@
 name        = "quickmd"
 version     = "0.4.2"
 authors     = ["Andrew Radev <andrew.radev@protonmail.com>"]
-edition     = "2018"
+edition     = "2021"
 license     = "MIT OR Apache-2.0"
 description = "Quickly preview a markdown file"
 readme      = "README.md"
@@ -14,24 +14,24 @@ repository  = "https://github.com/AndrewRadev/quickmd"
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-anyhow         = "1.0.26"
-directories    = "3.0.1"
-env_logger     = { version = "0.8.2", default-features = false }
-gdk            = "0.13.2"
-gdk-pixbuf     = "0.9.0"
-gio            = "0.9.1"
+anyhow         = "1.0.52"
+directories    = "4.0.1"
+env_logger     = { version = "0.9.0", default-features = false }
+gdk            = "0.14.3"
+gdk-pixbuf     = "0.14.0"
+gio            = "0.14.8"
 glib           = "0.10.3"
-gtk            = { version = "0.9.0", features = ["v3_16"] }
+gtk            = { version = "0.14.3", features = ["v3_20"] }
 log            = "0.4"
-notify         = "4.0.15"
+notify         = "4.0.17"
 pathbuftools   = "0.1.2"
-pulldown-cmark = { version = "0.8.0", default-features = false, features = ["simd"] }
+pulldown-cmark = { version = "0.9.0", default-features = false, features = ["simd"] }
 serde          = { version = "1.0", features = ["derive"] }
-serde_json     = "1.0.61"
-serde_yaml     = "0.8.15"
-structopt      = { version = "0.3.11", default-features = false }
-tempfile       = "3.1.0"
-webkit2gtk     = "0.11.0"
+serde_json     = "1.0.74"
+serde_yaml     = "0.8.23"
+structopt      = { version = "0.3.25", default-features = false }
+tempfile       = "3.2.0"
+webkit2gtk     = "0.16.0"
 
 [dev-dependencies]
 claim = "0.4.0"
