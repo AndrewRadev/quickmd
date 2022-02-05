@@ -85,8 +85,8 @@ pub fn init_update_loop<S>(renderer: markdown::Renderer, mut ui_sender: S)
 
         loop {
             match watcher_receiver.recv() {
-                Ok(DebouncedEvent::Write(file)) => {
-                    debug!("File updated: {}", file.display());
+                Ok(DebouncedEvent::Write(file) | DebouncedEvent::Create(file)) => {
+                    debug!("File update/recreate detected: {}", file.display());
 
                     if file == renderer.canonical_md_path {
                         match renderer.run() {
