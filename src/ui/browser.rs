@@ -1,3 +1,5 @@
+///! A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+
 use std::time::Instant;
 
 use anyhow::anyhow;

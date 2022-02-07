@@ -1,8 +1,7 @@
 //! The GTK user interface.
 
-/// A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+pub mod action;
 pub mod browser;
-/// A popup to choose a file if it wasn't provided on the command-line.
 pub mod file_picker;
 
 use std::path::{PathBuf, Path};
@@ -17,6 +16,7 @@ use crate::assets::Assets;
 use crate::input::{InputFile, Config};
 use crate::markdown::RenderedContent;
 use crate::ui::browser::Browser;
+use crate::ui::action::{Action, Keymaps};
 
 /// The container for all the GTK widgets of the app -- window, webview, etc.
 /// All of these are reference-counted, so should be cheap to clone.
@@ -110,22 +110,21 @@ impl App {
 
         // Key presses mapped to repeatable events:
         let browser = self.browser.clone();
+        let keymaps = Keymaps::default();
         self.window.connect_key_press_event(move |_window, event| {
             let keyval   = event.keyval();
             let keystate = event.state();
 
-            match (keystate, keyval) {
-                // Scroll with j/k, J/K:
-                (_, keys::constants::j) => browser.execute_js("window.scrollBy(0, 70)"),
-                (_, keys::constants::J) => browser.execute_js("window.scrollBy(0, 250)"),
-                (_, keys::constants::k) => browser.execute_js("window.scrollBy(0, -70)"),
-                (_, keys::constants::K) => browser.execute_js("window.scrollBy(0, -250)"),
-                // Jump to the top/bottom with g/G
-                (_, keys::constants::g) => browser.execute_js("window.scroll({top: 0})"),
-                (_, keys::constants::G) => {
+            match keymaps.get_action(keystate, keyval) {
+                Action::SmallScrollDown => browser.execute_js("window.scrollBy(0, 70)"),
+                Action::BigScrollDown   => browser.execute_js("window.scrollBy(0, 250)"),
+                Action::SmallScrollUp   => browser.execute_js("window.scrollBy(0, -70)"),
+                Action::BigScrollUp     => browser.execute_js("window.scrollBy(0, -250)"),
+                Action::ScrollToTop     => browser.execute_js("window.scroll({top: 0})"),
+                Action::ScrollToBottom  => {
                     browser.execute_js("window.scroll({top: document.body.scrollHeight})")
                 },
-                _ => (),
+                Action::Noop => (),
             }
             Inhibit(false)
         });

@@ -1,3 +1,5 @@
+//! A popup to choose a file if it wasn't provided on the command-line.
+
 use std::path::PathBuf;
 
 use gtk::prelude::*;
