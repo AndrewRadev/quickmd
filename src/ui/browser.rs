@@ -1,4 +1,4 @@
-///! A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+//! A container for the `Browser` struct
 
 use std::time::Instant;
 

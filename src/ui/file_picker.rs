@@ -1,4 +1,4 @@
-//! A popup to choose a file if it wasn't provided on the command-line.
+//! A container for the `FilePicker` struct
 
 use std::path::PathBuf;
 

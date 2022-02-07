@@ -7,7 +7,6 @@ pub mod file_picker;
 use std::path::{PathBuf, Path};
 use std::process::Command;
 
-use gdk::keys;
 use gtk::prelude::*;
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
@@ -124,40 +123,32 @@ impl App {
                 Action::ScrollToBottom  => {
                     browser.execute_js("window.scroll({top: document.body.scrollHeight})")
                 },
-                Action::Noop => (),
+                _ => (),
             }
             Inhibit(false)
         });
 
         // Key releases mapped to one-time events:
         let browser = self.browser.clone();
+        let keymaps = Keymaps::default();
         self.window.connect_key_release_event(move |window, event| {
             let keyval   = event.keyval();
             let keystate = event.state();
 
-            match (keystate, keyval) {
-                // Ctrl+Q
-                (gdk::ModifierType::CONTROL_MASK, keys::constants::q) => {
-                    gtk::main_quit();
-                },
-                // e:
-                (_, keys::constants::e) => {
+            match keymaps.get_action(keystate, keyval) {
+                Action::LaunchEditor => {
                     debug!("Launching an editor");
                     launch_editor(&editor_command, &filename);
                 },
-                // E:
-                (_, keys::constants::E) => {
+                Action::ExecEditor => {
                     debug!("Exec-ing into an editor");
                     exec_editor(&editor_command, &filename);
                 },
-                // +/-/=:
-                (_, keys::constants::plus)  => browser.zoom_in(),
-                (_, keys::constants::minus) => browser.zoom_out(),
-                (_, keys::constants::equal) => browser.zoom_reset(),
-                // F1
-                (_, keys::constants::F1) => {
-                    build_help_dialog(window).run();
-                },
+                Action::ZoomIn    => browser.zoom_in(),
+                Action::ZoomOut   => browser.zoom_out(),
+                Action::ZoomReset => browser.zoom_reset(),
+                Action::ShowHelp  => { build_help_dialog(window).run(); },
+                Action::Quit      => gtk::main_quit(),
                 _ => (),
             }
             Inhibit(false)
