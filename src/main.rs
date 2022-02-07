@@ -44,7 +44,7 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
 }
 
 fn launch_file_picker() -> anyhow::Result<PathBuf> {
-    ui::FilePicker::new().run().ok_or_else(|| {
+    ui::file_picker::FilePicker::new().run().ok_or_else(|| {
         anyhow!("Please provide a markdown file to render or call the program with - to read from STDIN")
     })
 }

@@ -1,21 +1,22 @@
 //! The GTK user interface.
 
+/// A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+pub mod browser;
+/// A popup to choose a file if it wasn't provided on the command-line.
+pub mod file_picker;
+
 use std::path::{PathBuf, Path};
 use std::process::Command;
-use std::time::Instant;
 
-use anyhow::anyhow;
 use gdk::keys;
-use gio::Cancellable;
 use gtk::prelude::*;
 use log::{debug, warn};
 use pathbuftools::PathBufTools;
-use webkit2gtk::{WebContext, WebView};
-use webkit2gtk::traits::WebViewExt;
 
-use crate::assets::{Assets, PageState};
+use crate::assets::Assets;
 use crate::input::{InputFile, Config};
 use crate::markdown::RenderedContent;
+use crate::ui::browser::Browser;
 
 /// The container for all the GTK widgets of the app -- window, webview, etc.
 /// All of these are reference-counted, so should be cheap to clone.
@@ -54,7 +55,7 @@ impl App {
         window.set_title(&title);
 
         let browser = Browser::new(config.clone())?;
-        window.add(&browser.webview);
+        browser.attach_to(&window);
 
         Ok(App { window, browser, assets, config, filename: input_file.path().to_path_buf() })
     }
@@ -195,142 +196,6 @@ pub enum Event {
     Reload,
 }
 
-/// A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
-///
-#[derive(Clone)]
-pub struct Browser {
-    webview: WebView,
-    config: Config,
-}
-
-impl Browser {
-    /// Construct a new instance with the provided `Config`.
-    ///
-    pub fn new(config: Config) -> anyhow::Result<Self> {
-        let web_context = WebContext::default().
-            ok_or_else(|| anyhow!("Couldn't initialize GTK WebContext"))?;
-        let webview = WebView::with_context(&web_context);
-        webview.set_zoom_level(config.zoom);
-
-        Ok(Browser { webview, config })
-    }
-
-    /// Delegates to `webkit2gtk::WebView`
-    pub fn load_uri(&self, uri: &str) {
-        self.webview.load_uri(uri);
-    }
-
-    /// Delegates to `webkit2gtk::WebView`
-    pub fn reload(&self) {
-        self.webview.reload();
-    }
-
-    /// Increase zoom level by ~10%
-    ///
-    pub fn zoom_in(&self) {
-        let zoom_level = self.webview.zoom_level();
-        self.webview.set_zoom_level(zoom_level + 0.1);
-        debug!("Zoom level set to: {}", zoom_level);
-    }
-
-    /// Decrease zoom level by ~10%, down till 20% or so.
-    ///
-    pub fn zoom_out(&self) {
-        let zoom_level = self.webview.zoom_level();
-
-        if zoom_level > 0.2 {
-            self.webview.set_zoom_level(zoom_level - 0.1);
-            debug!("Zoom level set to: {}", zoom_level);
-        }
-    }
-
-    /// Reset to the base zoom level defined in the config (which defaults to 100%).
-    ///
-    pub fn zoom_reset(&self) {
-        self.webview.set_zoom_level(self.config.zoom);
-        debug!("Zoom level set to: {}", self.config.zoom);
-    }
-
-    /// Get the deserialized `PageState` from the current contents of the webview. This is later
-    /// rendered unchanged into the HTML content.
-    ///
-    pub fn get_page_state(&self) -> PageState {
-        match self.webview.title() {
-            Some(t) => {
-                serde_json::from_str(t.as_str()).unwrap_or_else(|e| {
-                    warn!("Failed to get page state from {}: {:?}", t, e);
-                    PageState::default()
-                })
-            },
-            None => PageState::default(),
-        }
-    }
-
-    /// Execute some (async) javascript code in the webview, without checking the result other than
-    /// printing a warning if it errors out.
-    ///
-    pub fn execute_js(&self, js_code: &'static str) {
-        let now = Instant::now();
-
-        self.webview.run_javascript(js_code, None::<&Cancellable>, move |result| {
-            if let Err(e) = result {
-                warn!("Javascript execution error: {}", e);
-            } else {
-                debug!("Javascript executed in {}ms:\n> {}", now.elapsed().as_millis(), js_code);
-            }
-        });
-    }
-}
-
-/// A popup to choose a file if it wasn't provided on the command-line.
-///
-pub struct FilePicker(gtk::FileChooserDialog);
-
-impl FilePicker {
-    /// Construct a new file picker that only shows markdown files by default
-    ///
-    pub fn new() -> FilePicker {
-        let dialog = gtk::FileChooserDialog::new(
-            Some("Open"),
-            Some(&gtk::Window::new(gtk::WindowType::Popup)),
-            gtk::FileChooserAction::Open,
-        );
-
-        // Only show markdown files
-        let filter = gtk::FileFilter::new();
-        filter.set_name(Some("Markdown files (*.md, *.markdown)"));
-        filter.add_pattern("*.md");
-        filter.add_pattern("*.markdown");
-        dialog.add_filter(&filter);
-
-        // Just in case, allow showing all files
-        let filter = gtk::FileFilter::new();
-        filter.add_pattern("*");
-        filter.set_name(Some("All files"));
-        dialog.add_filter(&filter);
-
-        // Add the cancel and open buttons to that dialog.
-        dialog.add_button("Cancel", gtk::ResponseType::Cancel);
-        dialog.add_button("Open", gtk::ResponseType::Ok);
-
-        FilePicker(dialog)
-    }
-
-    /// Open the file picker popup and get the selected file.
-    ///
-    pub fn run(&self) -> Option<PathBuf> {
-        if self.0.run() == gtk::ResponseType::Ok {
-            self.0.filename()
-        } else {
-            None
-        }
-    }
-}
-
-impl Drop for FilePicker {
-    fn drop(&mut self) { self.0.close(); }
-}
-
 #[cfg(target_family="unix")]
 fn exec_editor(editor_command: &[String], file_path: &Path) {
     if let Some(mut editor) = build_editor_command(editor_command, file_path) {
@@ -386,7 +251,7 @@ fn build_help_dialog(window: &gtk::Window) -> gtk::MessageDialog {
     );
 
     let content = format!{
-        include_str!("../res/help_popup.html"),
+        include_str!("../../res/help_popup.html"),
         yaml_path = Config::yaml_path().display(),
         css_path = Config::css_path().display(),
     };
