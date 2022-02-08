@@ -56,3 +56,14 @@ fn test_unsetting_a_default_mapping() {
     keymaps.set_action(ModifierType::empty(), Key::from_name("j"), Action::Noop);
     assert_eq!(keymaps.get_action(ModifierType::empty(), Key::from_name("j")), Action::Noop);
 }
+
+#[test]
+fn test_setting_non_alphabetic_shift_keys() {
+    let mut keymaps = Keymaps::default();
+
+    keymaps.set_action(ModifierType::empty(), Key::from_unicode('+'), Action::ScrollToTop);
+    assert_eq!(keymaps.get_action(ModifierType::empty(), Key::from_unicode('+')), Action::ScrollToTop);
+    assert_eq!(keymaps.get_action(ModifierType::SHIFT_MASK, Key::from_unicode('+')), Action::ScrollToTop);
+
+    assert_ne!(keymaps.get_action(ModifierType::SHIFT_MASK, Key::from_unicode('=')), Action::ScrollToTop);
+}
