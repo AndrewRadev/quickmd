@@ -12,11 +12,11 @@ use quickmd::markdown::Renderer;
 use quickmd::ui;
 
 fn main() {
-    let config = Config::load().
-        unwrap_or_default();
-
     let options = Options::build();
     options.init_logging();
+
+    let config = Config::load().
+        unwrap_or_default();
 
     debug!("Loaded config: {:?}", config);
     debug!("  > path: {}", Config::yaml_path().display());
