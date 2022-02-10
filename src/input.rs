@@ -16,6 +16,7 @@ use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
 use crate::assets::HIGHLIGHT_JS_VERSION;
+use crate::ui::action::Action;
 
 /// Command-line options. Managed by StructOpt.
 #[derive(Debug, StructOpt)]
@@ -94,6 +95,7 @@ impl Options {
 /// config directory named "config.yaml".
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Config {
     /// The zoom level of the page. Defaults to 1.0, but on a HiDPI screen should be set to a
     /// higher value.
@@ -104,11 +106,28 @@ pub struct Config {
     /// which will produce a command-line warning when it's attempted.
     ///
     pub editor_command: Vec<String>,
+
+    /// Custom mappings. Each entry can contain three keys:
+    ///
+    /// - `key_char` or `key_name`: A descriptor, passed along to [`gdk::keys::Key::from_unicode`]
+    ///   or [`gdk::keys::Key::from_name`] respectively.
+    /// - `modifiers`: A list of modifiers, either "control", "shift", or "alt".
+    /// - `action`: See [`crate::ui::action::Action`].
+    ///
+    pub mappings: Vec<MappingDefinition>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MappingDefinition {
+    pub key_char: Option<char>,
+    pub key_name: Option<String>,
+    pub modifiers: Vec<String>,
+    pub action: Action,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self { zoom: 1.0, editor_command: Vec::new() }
+        Self { zoom: 1.0, editor_command: Vec::new(), mappings: Vec::new() }
     }
 }
 

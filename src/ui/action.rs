@@ -2,11 +2,15 @@
 
 use std::collections::HashMap;
 
+use anyhow::anyhow;
 use gdk::ModifierType;
 use gdk::keys::{self, Key};
+use serde::{Serialize, Deserialize};
+
+use crate::input::MappingDefinition;
 
 /// Mappable actions
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Action {
     /// Placeholder action to allow unmapping keys
     Noop,
@@ -49,6 +53,7 @@ pub enum Action {
 /// A mapping from key bindings to all the different UI actions. Initialized with a full set of
 /// defaults, which can be overridden by configuration.
 ///
+#[derive(Clone)]
 pub struct Keymaps {
     mappings: HashMap<(ModifierType, Key), Action>,
 }
@@ -84,6 +89,37 @@ impl Default for Keymaps {
 impl Keymaps {
     fn new() -> Self {
         Self { mappings: HashMap::new() }
+    }
+
+    /// Parse the given mappings as described in [`crate::input::Config`]
+    ///
+    pub fn add_config_mappings(&mut self, mappings: &Vec<MappingDefinition>) -> anyhow::Result<()> {
+        for mapping in mappings {
+            let mut modifiers = ModifierType::empty();
+            for m in &mapping.modifiers {
+                match m.as_str() {
+                    "control" => { modifiers |= ModifierType::CONTROL_MASK; }
+                    "shift"   => { modifiers |= ModifierType::SHIFT_MASK; }
+                    "alt"     => { modifiers |= ModifierType::MOD1_MASK; }
+                    _ => {
+                        { return Err(anyhow!("Unknown modifier: {}", m)); }
+                    },
+                }
+            }
+
+            let key =
+                if let Some(c) = mapping.key_char {
+                    Key::from_unicode(c)
+                } else if let Some(name) = &mapping.key_name {
+                    Key::from_name(name)
+                } else {
+                    return Err(anyhow!("No `key_char` or `key_name` given: {:?}", mapping));
+                };
+
+            self.set_action(modifiers, key, mapping.action.clone());
+        }
+
+        Ok(())
     }
 
     /// Get the action corresponding to the given modifiers and key. Uppercase unicode letters like

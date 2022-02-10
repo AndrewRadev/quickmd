@@ -16,3 +16,18 @@ zoom: 1.0
 #   - ["alacritty", "-e", "vim", "{path}"]
 #
 editor_command: ["gvim", "{path}"]
+
+# You can set your own keybindings, or unset the defaults by setting them to
+# "Noop". See the API documentaiton for a full list of actions, under
+# `ui::action::Action`.
+#
+# The keybindings are passed along to GDK:
+#   - if given `key_char`, it's passed along to `Key::from_unicode`
+#   - if given `key_name`, `Key::from_name` is called with it. So, "plus"
+#     instead of "+".
+#   - Modifiers that are supported: "control", "shift", "alt"
+#
+mappings: []
+# mappings:
+#   - { key_char: "q",     modifiers: [],          action: "Quit" }
+#   - { key_name: "minus", modifiers: ["control"], action: "ZoomOut" }

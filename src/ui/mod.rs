@@ -8,7 +8,7 @@ use std::path::{PathBuf, Path};
 use std::process::Command;
 
 use gtk::prelude::*;
-use log::{debug, warn};
+use log::{debug, warn, error};
 use pathbuftools::PathBufTools;
 
 use crate::assets::Assets;
@@ -107,14 +107,19 @@ impl App {
         let filename        = self.filename.clone();
         let editor_command  = self.config.editor_command.clone();
 
+        let mut keymaps = Keymaps::default();
+        keymaps.add_config_mappings(&self.config.mappings).unwrap_or_else(|e| {
+            error!("Mapping parsing error: {}", e);
+        });
+
         // Key presses mapped to repeatable events:
         let browser = self.browser.clone();
-        let keymaps = Keymaps::default();
+        let keymaps_clone = keymaps.clone();
         self.window.connect_key_press_event(move |_window, event| {
             let keyval   = event.keyval();
             let keystate = event.state();
 
-            match keymaps.get_action(keystate, keyval) {
+            match keymaps_clone.get_action(keystate, keyval) {
                 Action::SmallScrollDown => browser.execute_js("window.scrollBy(0, 70)"),
                 Action::BigScrollDown   => browser.execute_js("window.scrollBy(0, 250)"),
                 Action::SmallScrollUp   => browser.execute_js("window.scrollBy(0, -70)"),
@@ -130,12 +135,12 @@ impl App {
 
         // Key releases mapped to one-time events:
         let browser = self.browser.clone();
-        let keymaps = Keymaps::default();
+        let keymaps_clone = keymaps.clone();
         self.window.connect_key_release_event(move |window, event| {
             let keyval   = event.keyval();
             let keystate = event.state();
 
-            match keymaps.get_action(keystate, keyval) {
+            match keymaps_clone.get_action(keystate, keyval) {
                 Action::LaunchEditor => {
                     debug!("Launching an editor");
                     launch_editor(&editor_command, &filename);
