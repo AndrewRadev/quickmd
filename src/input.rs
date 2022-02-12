@@ -118,8 +118,12 @@ impl Config {
     ///
     pub fn load() -> Option<Self> {
         let yaml_path = Self::yaml_path();
-        let config_file = File::open(&yaml_path).map_err(|_| {
-            debug!("Didn't find config file: {}", yaml_path.display());
+        let config_file = File::open(&yaml_path).or_else(|_| {
+            // If "config.yaml" is missing, check for "config.yml" just in case
+            let yml_path = yaml_path.with_extension("yml");
+            File::open(&yml_path).map_err(|_| {
+                debug!("Didn't find config file: {} (or {})", yaml_path.display(), yml_path.display());
+            })
         }).ok()?;
 
         serde_yaml::from_reader(&config_file).map_err(|e| {
