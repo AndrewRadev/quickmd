@@ -93,7 +93,7 @@ impl Keymaps {
 
     /// Parse the given mappings as described in [`crate::input::Config`]
     ///
-    pub fn add_config_mappings(&mut self, mappings: &Vec<MappingDefinition>) -> anyhow::Result<()> {
+    pub fn add_config_mappings(&mut self, mappings: &[MappingDefinition]) -> anyhow::Result<()> {
         for mapping in mappings {
             let mut modifiers = ModifierType::empty();
             for m in &mapping.modifiers {
