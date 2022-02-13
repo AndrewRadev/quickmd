@@ -1,6 +1,7 @@
 use gdk::ModifierType;
 use gdk::keys::Key;
 
+use quickmd::input::MappingDefinition;
 use quickmd::ui::action::{Action, Keymaps};
 
 #[test]
@@ -66,4 +67,64 @@ fn test_setting_non_alphabetic_shift_keys() {
     assert_eq!(keymaps.get_action(ModifierType::SHIFT_MASK, Key::from_unicode('+')), Action::ScrollToTop);
 
     assert_ne!(keymaps.get_action(ModifierType::SHIFT_MASK, Key::from_unicode('=')), Action::ScrollToTop);
+}
+
+#[test]
+fn test_successfully_setting_mappings_from_the_config() {
+    let mut keymaps = Keymaps::new();
+
+    let mapping = MappingDefinition {
+        key_char:  Some('q'),
+        key_name:  None,
+        modifiers: Vec::new(),
+        action:    Action::Quit,
+    };
+    assert!(keymaps.add_config_mappings(&[mapping]).is_ok());
+
+    let mapping1 = MappingDefinition {
+        key_char:  None,
+        key_name:  Some(String::from("plus")),
+        modifiers: vec![String::from("control")],
+        action:    Action::ScrollToBottom,
+    };
+    let mapping2 = MappingDefinition {
+        key_char:  None,
+        key_name:  Some(String::from("minus")),
+        modifiers: vec![String::from("control"), String::from("shift"), String::from("alt")],
+        action:    Action::ScrollToTop,
+    };
+    assert!(keymaps.add_config_mappings(&[mapping1, mapping2]).is_ok());
+
+    let action = keymaps.get_action(ModifierType::empty(), Key::from_unicode('q'));
+    assert_eq!(action, Action::Quit);
+
+    let action = keymaps.get_action(ModifierType::CONTROL_MASK, Key::from_unicode('+'));
+    assert_eq!(action, Action::ScrollToBottom);
+
+    let action = keymaps.get_action(
+        ModifierType::CONTROL_MASK | ModifierType::SHIFT_MASK | ModifierType::MOD1_MASK,
+        Key::from_unicode('-')
+    );
+    assert_eq!(action, Action::ScrollToTop);
+}
+
+#[test]
+fn test_invalid_mapping_from_config() {
+    let mut keymaps = Keymaps::new();
+
+    let mapping = MappingDefinition {
+        key_char:  None,
+        key_name:  None,
+        modifiers: Vec::new(),
+        action:    Action::Quit,
+    };
+    assert!(keymaps.add_config_mappings(&[mapping]).is_err());
+
+    let mapping = MappingDefinition {
+        key_char:  Some('q'),
+        key_name:  Some(String::from("q")),
+        modifiers: Vec::new(),
+        action:    Action::Quit,
+    };
+    assert!(keymaps.add_config_mappings(&[mapping]).is_err());
 }

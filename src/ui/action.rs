@@ -87,7 +87,9 @@ impl Default for Keymaps {
 }
 
 impl Keymaps {
-    fn new() -> Self {
+    /// Create an empty set of keymaps.
+    ///
+    pub fn new() -> Self {
         Self { mappings: HashMap::new() }
     }
 
@@ -105,6 +107,12 @@ impl Keymaps {
                         { return Err(anyhow!("Unknown modifier: {}", m)); }
                     },
                 }
+            }
+
+            if mapping.key_char.is_some() && mapping.key_name.is_some() {
+                return Err(
+                    anyhow!("Both `key_char` or `key_name` given, please pick just one: {:?}", mapping)
+                );
             }
 
             let key =
