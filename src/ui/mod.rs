@@ -2,7 +2,7 @@
 
 pub mod action;
 pub mod browser;
-pub mod file_picker;
+pub mod dialogs;
 
 use std::path::{PathBuf, Path};
 use std::process::Command;
@@ -14,8 +14,9 @@ use pathbuftools::PathBufTools;
 use crate::assets::Assets;
 use crate::input::{InputFile, Config};
 use crate::markdown::RenderedContent;
-use crate::ui::browser::Browser;
 use crate::ui::action::{Action, Keymaps};
+use crate::ui::browser::Browser;
+use crate::ui::dialogs::open_help_dialog;
 
 /// The container for all the GTK widgets of the app -- window, webview, etc.
 /// All of these are reference-counted, so should be cheap to clone.
@@ -152,7 +153,7 @@ impl App {
                 Action::ZoomIn    => browser.zoom_in(),
                 Action::ZoomOut   => browser.zoom_out(),
                 Action::ZoomReset => browser.zoom_reset(),
-                Action::ShowHelp  => { build_help_dialog(window).run(); },
+                Action::ShowHelp  => { open_help_dialog(window); },
                 Action::Quit      => gtk::main_quit(),
                 _ => (),
             }
@@ -232,27 +233,4 @@ fn build_editor_command(editor_command: &[String], file_path: &Path) -> Option<C
     }
 
     Some(command)
-}
-
-fn build_help_dialog(window: &gtk::Window) -> gtk::MessageDialog {
-    use gtk::{DialogFlags, MessageType, ButtonsType};
-
-    let dialog = gtk::MessageDialog::new(
-        Some(window),
-        DialogFlags::MODAL | DialogFlags::DESTROY_WITH_PARENT,
-        MessageType::Info,
-        ButtonsType::Close,
-        ""
-    );
-
-    let content = format!{
-        include_str!("../../res/help_popup.html"),
-        yaml_path = Config::yaml_path().display(),
-        css_path = Config::css_path().display(),
-    };
-
-    dialog.set_markup(&content);
-    dialog.connect_response(|d, _response| d.close());
-
-    dialog
 }

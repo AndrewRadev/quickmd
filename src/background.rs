@@ -1,4 +1,4 @@
-//! Background monitoring for file-changes.
+//! Background monitoring for file changes.
 //!
 //! Whenever a file changes, we want to regenerate the HTML and send it to the UI for rendering to
 //! the user. This is done with the `init_update_loop` function.

@@ -1,4 +1,4 @@
-//! A container for the `Browser` struct
+//! A container for the `Browser` struct that wraps the [`webkit2gtk::WebView`].
 
 use std::time::Instant;
 
@@ -12,7 +12,7 @@ use webkit2gtk::{WebContext, WebView};
 use crate::assets::PageState;
 use crate::input::Config;
 
-/// A thin layer on top of `webkit2gtk::WebView` to put helper methods into.
+/// A thin layer on top of [`webkit2gtk::WebView`] to put helper methods into.
 ///
 #[derive(Clone)]
 pub struct Browser {
@@ -38,12 +38,12 @@ impl Browser {
         window.add(&self.webview);
     }
 
-    /// Delegates to `webkit2gtk::WebView`
+    /// Delegates to [`webkit2gtk::WebView`]
     pub fn load_uri(&self, uri: &str) {
         self.webview.load_uri(uri);
     }
 
-    /// Delegates to `webkit2gtk::WebView`
+    /// Delegates to [`webkit2gtk::WebView`]
     pub fn reload(&self) {
         self.webview.reload();
     }
@@ -56,7 +56,7 @@ impl Browser {
         debug!("Zoom level set to: {}", zoom_level);
     }
 
-    /// Decrease zoom level by ~10%, down till 20% or so.
+    /// Decrease zoom level by ~10%, down until 20% or so.
     ///
     pub fn zoom_out(&self) {
         let zoom_level = self.webview.zoom_level();

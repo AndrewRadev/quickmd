@@ -1,4 +1,4 @@
-//! Actions on the UI triggered by keybindings
+//! Actions on the UI triggered by keybindings.
 
 use std::collections::HashMap;
 
@@ -15,38 +15,38 @@ pub enum Action {
     /// Placeholder action to allow unmapping keys
     Noop,
 
-    /// Scroll up by a small step
+    /// Scroll up by a small step. Default: `k`
     SmallScrollUp,
-    /// Scroll down by a small step
+    /// Scroll down by a small step. Default: `j`
     SmallScrollDown,
 
-    /// Scroll up by a large step
+    /// Scroll up by a large step. Default: `K`
     BigScrollUp,
-    /// Scroll down by a large step
+    /// Scroll down by a large step. Default: `J`
     BigScrollDown,
 
-    /// Scroll to the top of the document
+    /// Scroll to the top of the document. Default: `g`
     ScrollToTop,
-    /// Scroll to the bottom of the document
+    /// Scroll to the bottom of the document. Default: `G`
     ScrollToBottom,
 
-    /// Quit the entire application
+    /// Quit the entire application. Default: `ctrl+q`
     Quit,
 
-    /// Launch an editor instance if it's configured
+    /// Launch an editor instance if it's configured. Default: `e`
     LaunchEditor,
     /// Exec the current process into an editor instance if it's configured (and it's possible on
-    /// the OS)
+    /// the OS). Default: `E`
     ExecEditor,
 
-    /// Zoom the browser in by 10%
+    /// Zoom the browser in by 10%. Default: `+`
     ZoomIn,
-    /// Zoom the browser out by 10%
+    /// Zoom the browser out by 10%. Default: `-`
     ZoomOut,
-    /// Reset the zoom level to the configured starting point
+    /// Reset the zoom level to the configured starting point. Default: `=`
     ZoomReset,
 
-    /// Show a help popup
+    /// Show a help popup. Default: `F1`
     ShowHelp,
 }
 

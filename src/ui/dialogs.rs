@@ -1,8 +1,10 @@
-//! A container for the `FilePicker` struct
+//! Modal dialogs.
 
 use std::path::PathBuf;
 
 use gtk::prelude::*;
+
+use crate::input::Config;
 
 /// A popup to choose a file if it wasn't provided on the command-line.
 ///
@@ -51,4 +53,29 @@ impl FilePicker {
 
 impl Drop for FilePicker {
     fn drop(&mut self) { self.0.close(); }
+}
+
+/// Open a popup that renders documentation for all the default keyboard and mouse mappings.
+///
+pub fn open_help_dialog(window: &gtk::Window) -> gtk::ResponseType {
+    use gtk::{DialogFlags, MessageType, ButtonsType};
+
+    let dialog = gtk::MessageDialog::new(
+        Some(window),
+        DialogFlags::MODAL | DialogFlags::DESTROY_WITH_PARENT,
+        MessageType::Info,
+        ButtonsType::Close,
+        ""
+    );
+
+    let content = format!{
+        include_str!("../../res/help_popup.html"),
+        yaml_path = Config::yaml_path().display(),
+        css_path = Config::css_path().display(),
+    };
+
+    dialog.set_markup(&content);
+    dialog.connect_response(|d, _response| d.close());
+
+    dialog.run()
 }

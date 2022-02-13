@@ -1,6 +1,6 @@
 //! Markdown rendering.
 //!
-//! Uses the `pulldown_cmark` crate with Github-flavored markdown options enabled. Extracts
+//! Uses the [`pulldown_cmark`] crate with Github-flavored markdown options enabled. Extracts
 //! languages used in code blocks for highlighting purposes.
 
 use std::fs;
