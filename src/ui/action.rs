@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use anyhow::anyhow;
 use gdk::ModifierType;
 use gdk::keys::{self, Key};
+use log::debug;
 use serde::{Serialize, Deserialize};
 
 use crate::input::MappingDefinition;
@@ -125,6 +126,7 @@ impl Keymaps {
                 };
 
             self.set_action(modifiers, key, mapping.action.clone());
+            debug!("Defined custom mapping: {:?}", mapping);
         }
 
         Ok(())
