@@ -51,6 +51,12 @@ pub enum Action {
     ShowHelp,
 }
 
+impl Default for Action {
+    fn default() -> Self {
+        Action::Noop
+    }
+}
+
 /// A mapping from key bindings to all the different UI actions. Initialized with a full set of
 /// defaults, which can be overridden by configuration.
 ///

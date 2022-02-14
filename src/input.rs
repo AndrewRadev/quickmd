@@ -114,7 +114,8 @@ pub struct Config {
 /// A single description of a mapping from a keybinding to a UI action. The fields `key_char` and
 /// `key_name` are exclusive, which is validated in [`crate::ui::action::Keymaps`].
 ///
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct MappingDefinition {
     /// A descriptor, passed along to [`gdk::keys::Key::from_unicode`]
     pub key_char: Option<char>,
