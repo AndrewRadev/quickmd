@@ -24,10 +24,10 @@ editor_command: ["gvim", "{path}"]
 # The keybindings are passed along to GDK:
 #   - if given `key_char`, it's passed along to `Key::from_unicode`
 #   - if given `key_name`, `Key::from_name` is called with it. So, "plus"
-#     instead of "+".
+#     instead of "+". You can also use it for special keys like "Escape", "F1", etc.
 #   - Modifiers that are supported: "control", "shift", "alt"
 #
 mappings: []
 # mappings:
-#   - { key_char: "q",     modifiers: [],          action: "Quit" }
-#   - { key_name: "minus", modifiers: ["control"], action: "ZoomOut" }
+#   - { key_char: "q",                        action: "Quit" }
+#   - { key_name: "minus", mods: ["control"], action: "ZoomOut" }

@@ -105,7 +105,7 @@ impl Keymaps {
     pub fn add_config_mappings(&mut self, mappings: &[MappingDefinition]) -> anyhow::Result<()> {
         for mapping in mappings {
             let mut modifiers = ModifierType::empty();
-            for m in &mapping.modifiers {
+            for m in &mapping.mods {
                 match m.as_str() {
                     "control" => { modifiers |= ModifierType::CONTROL_MASK; }
                     "shift"   => { modifiers |= ModifierType::SHIFT_MASK; }

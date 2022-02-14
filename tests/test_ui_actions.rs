@@ -74,24 +74,24 @@ fn test_successfully_setting_mappings_from_the_config() {
     let mut keymaps = Keymaps::new();
 
     let mapping = MappingDefinition {
-        key_char:  Some('q'),
-        key_name:  None,
-        modifiers: Vec::new(),
-        action:    Action::Quit,
+        key_char: Some('q'),
+        key_name: None,
+        mods:     Vec::new(),
+        action:   Action::Quit,
     };
     assert!(keymaps.add_config_mappings(&[mapping]).is_ok());
 
     let mapping1 = MappingDefinition {
-        key_char:  None,
-        key_name:  Some(String::from("plus")),
-        modifiers: vec![String::from("control")],
-        action:    Action::ScrollToBottom,
+        key_char: None,
+        key_name: Some(String::from("plus")),
+        mods:     vec![String::from("control")],
+        action:   Action::ScrollToBottom,
     };
     let mapping2 = MappingDefinition {
-        key_char:  None,
-        key_name:  Some(String::from("minus")),
-        modifiers: vec![String::from("control"), String::from("shift"), String::from("alt")],
-        action:    Action::ScrollToTop,
+        key_char: None,
+        key_name: Some(String::from("minus")),
+        mods:     vec![String::from("control"), String::from("shift"), String::from("alt")],
+        action:   Action::ScrollToTop,
     };
     assert!(keymaps.add_config_mappings(&[mapping1, mapping2]).is_ok());
 
@@ -113,18 +113,18 @@ fn test_invalid_mapping_from_config() {
     let mut keymaps = Keymaps::new();
 
     let mapping = MappingDefinition {
-        key_char:  None,
-        key_name:  None,
-        modifiers: Vec::new(),
-        action:    Action::Quit,
+        key_char: None,
+        key_name: None,
+        mods:     Vec::new(),
+        action:   Action::Quit,
     };
     assert!(keymaps.add_config_mappings(&[mapping]).is_err());
 
     let mapping = MappingDefinition {
-        key_char:  Some('q'),
-        key_name:  Some(String::from("q")),
-        modifiers: Vec::new(),
-        action:    Action::Quit,
+        key_char: Some('q'),
+        key_name: Some(String::from("q")),
+        mods:     Vec::new(),
+        action:   Action::Quit,
     };
     assert!(keymaps.add_config_mappings(&[mapping]).is_err());
 }

@@ -124,7 +124,7 @@ pub struct MappingDefinition {
     pub key_name: Option<String>,
 
     /// A list of key modifiers, either "control", "shift", or "alt"
-    pub modifiers: Vec<String>,
+    pub mods: Vec<String>,
 
     /// The action mapped to this key combination
     pub action: Action,
