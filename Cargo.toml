@@ -26,6 +26,7 @@ log            = "0.4"
 notify         = "4.0.17"
 pathbuftools   = "0.1.2"
 pulldown-cmark = { version = "0.9.0", default-features = false, features = ["simd"] }
+regex          = "1.5.4"
 serde          = { version = "1.0", features = ["derive"] }
 serde_json     = "1.0.74"
 serde_yaml     = "0.8.23"
