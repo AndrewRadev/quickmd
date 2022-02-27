@@ -12,11 +12,11 @@ use quickmd::markdown::Renderer;
 use quickmd::ui;
 
 fn main() {
-    let config = Config::load().
-        unwrap_or_default();
-
     let options = Options::build();
     options.init_logging();
+
+    let config = Config::load().
+        unwrap_or_default();
 
     debug!("Loaded config: {:?}", config);
     debug!("  > path: {}", Config::yaml_path().display());
@@ -44,7 +44,7 @@ fn run(config: &Config, options: &Options) -> anyhow::Result<()> {
 }
 
 fn launch_file_picker() -> anyhow::Result<PathBuf> {
-    ui::FilePicker::new().run().ok_or_else(|| {
+    ui::dialogs::FilePicker::new().run().ok_or_else(|| {
         anyhow!("Please provide a markdown file to render or call the program with - to read from STDIN")
     })
 }

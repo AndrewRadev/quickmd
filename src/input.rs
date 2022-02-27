@@ -1,7 +1,7 @@
-//! Input handling.
+//! Input and config handling.
 //!
-//! Currently, this only includes handling command-line options. Potentially the place to handle
-//! any other type of configuration and input to the application.
+//! This includes command-line options and settings from the YAML config. Potentially the place to
+//! handle any other type of configuration and input to the application.
 
 use std::fs::File;
 use std::io;
@@ -16,8 +16,9 @@ use structopt::StructOpt;
 use tempfile::NamedTempFile;
 
 use crate::assets::HIGHLIGHT_JS_VERSION;
+use crate::ui::action::Action;
 
-/// Command-line options. Managed by StructOpt.
+/// Command-line options. Managed by [`structopt`].
 #[derive(Debug, StructOpt)]
 pub struct Options {
     /// Activates debug logging
@@ -44,7 +45,7 @@ pub struct Options {
 }
 
 impl Options {
-    /// Creates a new instance by parsing input args. Apart from just running StructOpt's
+    /// Creates a new instance by parsing input args. Apart from just running [`structopt`]'s
     /// initialization, it also adds some additional information to the description that depends on
     /// the current environment.
     ///
@@ -94,6 +95,7 @@ impl Options {
 /// config directory named "config.yaml".
 ///
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Config {
     /// The zoom level of the page. Defaults to 1.0, but on a HiDPI screen should be set to a
     /// higher value.
@@ -104,11 +106,33 @@ pub struct Config {
     /// which will produce a command-line warning when it's attempted.
     ///
     pub editor_command: Vec<String>,
+
+    /// Custom mappings. See documentation of [`MappingDefinition`] for details.
+    pub mappings: Vec<MappingDefinition>,
+}
+
+/// A single description of a mapping from a keybinding to a UI action. The fields `key_char` and
+/// `key_name` are exclusive, which is validated in [`crate::ui::action::Keymaps`].
+///
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MappingDefinition {
+    /// A descriptor, passed along to [`gdk::keys::Key::from_unicode`]
+    pub key_char: Option<char>,
+
+    /// A descriptor, passed along to [`gdk::keys::Key::from_name`]
+    pub key_name: Option<String>,
+
+    /// A list of key modifiers, either "control", "shift", or "alt"
+    pub mods: Vec<String>,
+
+    /// The action mapped to this key combination
+    pub action: Action,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self { zoom: 1.0, editor_command: Vec::new() }
+        Self { zoom: 1.0, editor_command: Vec::new(), mappings: Vec::new() }
     }
 }
 

@@ -29,7 +29,7 @@ const ICON_PNG:   &[u8] = include_bytes!("../res/icon.png");
 
 /// The version of highlight.js the app uses for code highlighting.
 ///
-/// More details about the tool at https://highlightjs.org/
+/// More details about the tool at <https://highlightjs.org/>
 ///
 pub const HIGHLIGHT_JS_VERSION: &str = "9.18.1";
 

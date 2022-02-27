@@ -3,3 +3,6 @@
 /.cargo/config.toml
 
 notes
+
+# Ignored since it contains system-specific linker config
+/.cargo/config.toml
