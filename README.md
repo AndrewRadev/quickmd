@@ -100,6 +100,8 @@ ARGS:
 
 - Scroll with Vi-like keybindings, Press `e` to spawn an editor, if configured.
 
+- Customizable keybindings. Check the API documentation or try `--install-default-config` to get an annotated config with examples.
+
 ## Configuration
 
 You can change the CSS of the preview HTML by writing a file named "custom.css" in the application's config directory. On a linux machine, it would be: `~/.config/quickmd/`.
