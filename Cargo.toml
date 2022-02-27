@@ -1,6 +1,6 @@
 [package]
 name        = "quickmd"
-version     = "0.5.0"
+version     = "0.6.0"
 authors     = ["Andrew Radev <andrew.radev@protonmail.com>"]
 edition     = "2021"
 license     = "MIT OR Apache-2.0"
