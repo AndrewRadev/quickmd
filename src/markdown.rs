@@ -7,6 +7,7 @@ use std::fs;
 use std::io;
 use std::path::{PathBuf, Path};
 use std::collections::HashSet;
+use regex::Regex;
 use pulldown_cmark::{Parser, Options, Event, html};
 
 /// Encapsulates a markdown file and provides an interface to turn its contents into HTML.
@@ -35,6 +36,9 @@ impl Renderer {
         let markdown = fs::read_to_string(&self.canonical_md_path)?;
         let root_dir = self.canonical_md_path.parent().unwrap_or_else(|| Path::new(""));
 
+        let re_absolute_url = Regex::new(r"^[a-z]+://").unwrap();
+        let re_path_prefix = Regex::new(r"^(/|\./)?").unwrap();
+
         let mut options = Options::empty();
         options.insert(Options::ENABLE_TABLES);
         options.insert(Options::ENABLE_FOOTNOTES);
@@ -52,8 +56,8 @@ impl Renderer {
                         languages.insert(content.to_string());
                     }
                 },
-                Event::Start(Tag::Image(_, url, _)) if url.starts_with("./") => {
-                    *url = format!("file://{}/{}", root_dir.display(), &url[2..]).into();
+                Event::Start(Tag::Image(_, url, _)) if !re_absolute_url.is_match(url) => {
+                    *url = format!("file://{}/{}", root_dir.display(), re_path_prefix.replace(url, "")).into();
                 },
                 _ => (),
             }
