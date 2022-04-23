@@ -49,7 +49,7 @@ quickmd <markdown-file>
 Pressing CTRL+Q will close the window. Running it with `--help` should provide more info on the available options. Here's how the output looks for me:
 
 ```
-quickmd 0.6.0
+quickmd 0.6.1
 A simple self-contained markdown previewer.
 
 Code highlighting via highlight.js version 9.18.1
@@ -61,6 +61,9 @@ USAGE:
     quickmd [FLAGS] [OPTIONS] [input-file.md]
 
 FLAGS:
+        --browser-only
+            Builds output HTML and other assets, but doesn't show a UI -- instead, gives you a filename to open in the
+            browser
     -d, --debug
             Activates debug logging
 

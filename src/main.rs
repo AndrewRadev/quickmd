@@ -61,8 +61,9 @@ fn launch_app(input_file: &Path, options: &Options, config: &Config) -> anyhow::
 
     let renderer = Renderer::new(md_path.to_path_buf());
     let assets = Assets::init(options.output_dir.clone())?;
+    let ui_visible = !options.browser_only;
 
-    let mut ui = ui::App::init(config.clone(), input_file.clone(), assets)?;
+    let mut ui = ui::App::init(config.clone(), input_file.clone(), assets, ui_visible)?;
     let (ui_sender, ui_receiver) = glib::MainContext::channel(glib::PRIORITY_DEFAULT);
     ui.init_render_loop(ui_receiver);
 

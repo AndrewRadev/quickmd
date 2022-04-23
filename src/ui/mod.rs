@@ -28,6 +28,7 @@ pub struct App {
     assets: Assets,
     filename: PathBuf,
     config: Config,
+    visible: bool,
 }
 
 impl App {
@@ -35,10 +36,11 @@ impl App {
     ///
     /// - input_file: Used as the window title and for other actions on the file.
     /// - assets:     Encapsulates the HTML layout that will be wrapping the rendered markdown.
+    /// - visible:    Whether to show the UI or just use it for events.
     ///
     /// Initialization could fail due to a `WebContext` failure.
     ///
-    pub fn init(config: Config, input_file: InputFile, assets: Assets) -> anyhow::Result<Self> {
+    pub fn init(config: Config, input_file: InputFile, assets: Assets, visible: bool) -> anyhow::Result<Self> {
         let window = gtk::Window::new(gtk::WindowType::Toplevel);
         window.set_default_size(1024, 768);
 
@@ -57,7 +59,10 @@ impl App {
         let browser = Browser::new(config.clone())?;
         browser.attach_to(&window);
 
-        Ok(App { window, browser, assets, config, filename: input_file.path().to_path_buf() })
+        Ok(App {
+            window, browser, assets, config, visible,
+            filename: input_file.path().to_path_buf(),
+        })
     }
 
     /// Start listening to events from the `ui_receiver` and trigger the relevant methods on the
@@ -82,7 +87,23 @@ impl App {
     ///
     pub fn run(&mut self) {
         self.connect_events();
-        self.window.show_all();
+
+        if self.visible {
+            self.window.show_all();
+        } else {
+            match self.assets.output_path() {
+                Ok(output_path) => {
+                    println!(
+                        "Markdown rendered in: {} (Ctrl+C to stop)",
+                        output_path.join("index.html").display()
+                    );
+                },
+                Err(e) => {
+                    error!("{}", e);
+                    ::std::process::exit(1);
+                },
+            }
+        }
 
         gtk::main();
 

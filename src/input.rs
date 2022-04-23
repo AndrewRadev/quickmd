@@ -39,6 +39,11 @@ pub struct Options {
     #[structopt(long = "output", name = "directory")]
     pub output_dir: Option<PathBuf>,
 
+    /// Builds output HTML and other assets, but doesn't show a UI -- instead, gives you a filename
+    /// to open in the browser.
+    #[structopt(long = "browser-only")]
+    pub browser_only: bool,
+
     /// Creates a configuration file for later editing if one doesn't exist. Exits when done.
     #[structopt(long)]
     pub install_default_config: bool,
