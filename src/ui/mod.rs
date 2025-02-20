@@ -199,7 +199,7 @@ fn exec_editor(editor_command: &[String], file_path: &Path) {
 
         use std::os::unix::process::CommandExt;
 
-        editor.exec();
+        let _ = editor.exec();
     }
 }
 
